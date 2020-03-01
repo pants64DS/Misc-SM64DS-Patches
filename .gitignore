@@ -1,0 +1,9 @@
+build
+bak
+source/wip
+*.nds
+*.bin
+*.elf
+*.sym
+*.o
+*.d
