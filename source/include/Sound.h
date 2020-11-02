@@ -231,13 +231,13 @@ namespace Sound
 	
 	extern Player PLAYERS[]; //size not known, but greater than 9.
 	
-	unsigned PlayLong(unsigned uniqueID, unsigned soundArchiveID, unsigned soundID, const Vector3_Q12& camSpacePos, unsigned arg4); //first arg = guess
+	unsigned PlayLong(unsigned uniqueID, unsigned soundArchiveID, unsigned soundID, const Vector3& camSpacePos, unsigned arg4); //first arg = guess
 	
-	void PlayCharVoice(unsigned charID, unsigned soundID, const Vector3_Q12& camSpacePos);
+	void PlayCharVoice(unsigned charID, unsigned soundID, const Vector3& camSpacePos);
 	
-	void Play(unsigned archiveID, unsigned soundID, const Vector3_Q12& camSpacePos);
-	void PlayBank0(unsigned soundID, const Vector3_Q12& camSpacePos);
-	void PlayBank3(unsigned soundID, const Vector3_Q12& camSpacePos);
+	void Play(unsigned archiveID, unsigned soundID, const Vector3& camSpacePos);
+	void PlayBank0(unsigned soundID, const Vector3& camSpacePos);
+	void PlayBank3(unsigned soundID, const Vector3& camSpacePos);
 	void PlayBank2_2D(unsigned soundID);
 	void PlayBank3_2D(unsigned soundID);
 	

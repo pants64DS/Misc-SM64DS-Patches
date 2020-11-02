@@ -76,10 +76,10 @@ namespace GXFIFO
 {
 	inline void LoadMatrix4x3(const Matrix4x3* matrix)
 	{
-		GXPORT_MTX_LOAD_4x3 = matrix->r0c0.val;		GXPORT_MTX_LOAD_4x3 = matrix->r1c0.val;		GXPORT_MTX_LOAD_4x3 = matrix->r2c0.val;
-		GXPORT_MTX_LOAD_4x3 = matrix->r0c1.val;		GXPORT_MTX_LOAD_4x3 = matrix->r1c1.val;		GXPORT_MTX_LOAD_4x3 = matrix->r2c1.val;
-		GXPORT_MTX_LOAD_4x3 = matrix->r0c2.val;		GXPORT_MTX_LOAD_4x3 = matrix->r1c2.val;		GXPORT_MTX_LOAD_4x3 = matrix->r2c2.val;
-		GXPORT_MTX_LOAD_4x3 = matrix->r0c3.val;		GXPORT_MTX_LOAD_4x3 = matrix->r1c3.val;		GXPORT_MTX_LOAD_4x3 = matrix->r2c3.val;
+		GXPORT_MTX_LOAD_4x3 = matrix->c0.x.val;		GXPORT_MTX_LOAD_4x3 = matrix->c0.y.val;		GXPORT_MTX_LOAD_4x3 = matrix->c0.z.val;
+		GXPORT_MTX_LOAD_4x3 = matrix->c1.x.val;		GXPORT_MTX_LOAD_4x3 = matrix->c1.y.val;		GXPORT_MTX_LOAD_4x3 = matrix->c1.z.val;
+		GXPORT_MTX_LOAD_4x3 = matrix->c2.x.val;		GXPORT_MTX_LOAD_4x3 = matrix->c2.y.val;		GXPORT_MTX_LOAD_4x3 = matrix->c2.z.val;
+		GXPORT_MTX_LOAD_4x3 = matrix->c3.x.val;		GXPORT_MTX_LOAD_4x3 = matrix->c3.y.val;		GXPORT_MTX_LOAD_4x3 = matrix->c3.z.val;
 	}
 
 	//Do NOT set the light vector to <1, 0, 0>, <0, 1, 0>, or <0, 0, 1>. Instead, do <0x0.ff8, 0, 0>, for example.
@@ -161,10 +161,10 @@ struct Bone
 	unsigned unk00;
 	unsigned unk04;
 	unsigned unk08;
-	Vector3_Q12 scale;
+	Vector3 scale;
 	uint16_t unk18;
 	Vector3_16 rot;
-	Vector3_Q12 pos;
+	Vector3 pos;
 	unsigned unk2c;
 	unsigned unk30;
 };
@@ -196,7 +196,7 @@ struct Animation	//internal: FrameCtrl; done
 	unsigned GetFrameCount();
 	void SetAnimation(uint16_t frames, Flags flags, Fix12i speed, uint16_t startFrame);
 	void Copy(const Animation& anim);
-	bool Func_02015A98(int arg0);							//Does something like simulating an advance? Like checking if the next frame expires the animation...
+	bool Func_02015A98(int arg0); //Does something like simulating an advance? Like checking if the next frame expires the animation...
 
 	static char* LoadFile(SharedFilePtr& filePtr);
 };
@@ -229,6 +229,7 @@ struct ModelComponents
 	
 	void UpdateBones(char* animFile, int frame);
 	void UpdateVertsUsingBones();
+	void Render(Matrix4x3* mat, Vector3* scale);
 };
 
 
@@ -297,7 +298,7 @@ struct Model : public ModelBase		//internal: SimpleModel
 	virtual bool Virtual08(unsigned arg0, unsigned arg1, unsigned arg2) override;
 	virtual void UpdateVerts();
 	virtual void Virtual10(Matrix4x3& arg0);
-	virtual void Render(const Vector3_Q12* scale);
+	virtual void Render(const Vector3* scale);
 	
 	bool SetFile(char* file, int arg1, int arg2);
 	static char* LoadFile(SharedFilePtr& filePtr);
@@ -313,8 +314,8 @@ struct ModelAnim : public Model, Animation	//internal: ModelAnm
 	virtual ~ModelAnim();
 	virtual void UpdateVerts() override;
 	virtual void Virtual10(Matrix4x3& arg0) override;
-	virtual void Render(const Vector3_Q12* scale) override;							//Calls UpdateVerts and then Model::Render
-	virtual void Virtual18(unsigned arg0, const Vector3_Q12* scale);				//Calls Virtual10 and then Model::Render
+	virtual void Render(const Vector3* scale) override;							//Calls UpdateVerts and then Model::Render
+	virtual void Virtual18(unsigned arg0, const Vector3* scale);				//Calls Virtual10 and then Model::Render
 	
 	void SetAnim(char* animFile, int flags, Fix12i speed, unsigned startFrame);
 
@@ -339,7 +340,7 @@ struct ShadowModel : public ModelBase	//internal: ShadowModel; done
 {
 	ModelComponents* modelDataPtr;
 	Matrix4x3* matPtr;
-	Vector3_Q12 scale;
+	Vector3 scale;
 	unsigned unk1c;
 	ShadowModel* prev;
 	ShadowModel* next;
@@ -387,8 +388,8 @@ struct BlendModelAnim : public ModelAnim	//internal: BlendAnmModel
 	virtual bool Virtual08(unsigned arg0, unsigned arg1, unsigned arg2) override;
 	virtual void UpdateVerts() override;
 	virtual void Virtual10(Matrix4x3& arg0) override;
-	virtual void Render(const Vector3_Q12* scale) override;
-	virtual void Virtual18(unsigned arg0, const Vector3_Q12* scale) override;		//Calls Virtual10 and then Model::Render
+	virtual void Render(const Vector3* scale) override;
+	virtual void Virtual18(unsigned arg0, const Vector3* scale) override;		//Calls Virtual10 and then Model::Render
 
 	//2 funcs missing
 

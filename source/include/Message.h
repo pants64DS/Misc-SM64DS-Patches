@@ -1,3 +1,6 @@
+#ifndef MESSAGE_INCLUDED
+#define MESSAGE_INCLUDED
+
 #include "SM64DS_Common.h"
 
 //0xfd is new line
@@ -84,3 +87,5 @@ extern "C"
 }
 
 using MsgGenTextFunc = void(*)();
+
+#endif
