@@ -4,9 +4,10 @@
 #include "SM64DS_Common.h"
 
 
-struct Input{
-
-	enum Buttons : uint16_t{
+struct Input
+{
+	enum Buttons : uint16_t
+	{
 		A = 1 << 0,
 		B = 1 << 1,
 		SELECT = 1 << 2,
@@ -30,7 +31,7 @@ struct Input{
 	Fix12s magnitude;
 	Fix12s dirX;
 	Fix12s dirZ;
-	uint16_t angle; //0x0000 is toward the camera, 0x4000 is right
+	short angle; //0x0000 is toward the camera, 0x4000 is right
 	uint8_t touchscreenX; //0 is at the left
 	uint8_t touchscreenY; //0 is at the top
 	uint8_t touchscreenDelay;
@@ -38,12 +39,28 @@ struct Input{
 	bool touchscreenBeingUsed;
 	uint8_t unk15;
 	uint16_t unk16;
+};
 
+struct InputRelated
+{
+	unsigned unk00;
+	unsigned unk04;
+	uint16_t unk08;
+	uint16_t buttonsHeld;
+	short    cameraAngleY;
+	uint16_t unk0e;
+	unsigned unk10;
+	unsigned unk14;
+	unsigned unk18;
+	unsigned unk1c;
+	unsigned unk20;
 };
 
 extern "C"
 {
 	extern Input INPUT_ARR[4];
+
+	extern InputRelated INPUT_RELATED_ARR[4];
 }
 
 #endif // SM64DS_INPUT_INCLUDED

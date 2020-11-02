@@ -1,7 +1,7 @@
 #ifndef SM64DS_ACTOR_INCLUDED
 #define SM64DS_ACTOR_INCLUDED
 
-#include "SM64DS_Common.h"
+#include "Memory.h"
 
 
 struct Player;
@@ -9,7 +9,7 @@ struct CylinderClsn;
 struct ShadowModel;
 
 
-struct ActorBase		//internal name: fBase
+struct ActorBase //internal name: fBase
 {
 	enum AliveState
 	{
@@ -25,8 +25,8 @@ struct ActorBase		//internal name: fBase
 		SceneNode* nextSibling;
 		ActorBase* actor;
 
+		SceneNode(); //Calls Reset
 		void Reset();
-		SceneNode* ResetSceneNode(); //Calls Reset
 	};
 
 	struct ProcessingListNode
@@ -49,18 +49,18 @@ struct ActorBase		//internal name: fBase
 	};
 
 	void* operator new(size_t count); //actor bases have their own heap
-	inline void operator delete(void* ptr) { FreeHeapAllocation(ptr, *(unsigned**)0x020a0eac); }
+	inline void operator delete(void* ptr) { Memory::Deallocate(ptr, Memory::gameHeapPtr); }
 
-	virtual int  InitResources();
+	virtual int  InitResources(); // 0x020e558c
 	virtual bool BeforeInitResources();
 	virtual void AfterInitResources(unsigned vfSuccess);
-	virtual int  CleanupResources();
+	virtual int  CleanupResources(); // 0x020e32d4
 	virtual bool BeforeCleanupResources();
 	virtual void AfterCleanupResources(unsigned vfSuccess);
-	virtual int  Behavior();
+	virtual int  Behavior(); // 0x020e4d24
 	virtual bool BeforeBehavior();
 	virtual void AfterBehavior(unsigned vfSuccess);
-	virtual int  Render();
+	virtual int  Render(); // 0x020e3a08
 	virtual bool BeforeRender();
 	virtual void AfterRender(unsigned vfSuccess);
 	virtual void Virtual30();
@@ -70,6 +70,11 @@ struct ActorBase		//internal name: fBase
 	virtual ~ActorBase();
 
 	void Destroy();
+
+	ActorBase(const ActorBase&) = delete;
+	ActorBase(ActorBase&&) = delete;
+	ActorBase& operator=(const ActorBase&) = delete;
+	ActorBase& operator=(ActorBase&&) = delete;
 
 	//vTable;
 	unsigned uniqueID;
@@ -90,15 +95,11 @@ struct ActorBase		//internal name: fBase
 
 
 
-struct ActorDerived : public ActorBase		//internal name: dBase
+struct ActorDerived : public ActorBase //internal name: dBase
 {
-
-	virtual void AfterInitResources(unsigned vfSuccess) override;		//Destroys Actor (ActorBase::Destroy) on vfunc failure, then calls ActorBase::AfterInitResources(unsigned)
+	virtual void AfterInitResources(unsigned vfSuccess) override; //Destroys Actor (ActorBase::Destroy) on vfunc failure, then calls ActorBase::AfterInitResources(unsigned)
 	virtual ~ActorDerived() override;
-
 };
-
-
 
 
 
@@ -137,21 +138,21 @@ struct Actor : public ActorBase				//internal name: dActor
 	};
 
 	ListNode listNode;
-	Vector3_Q12 pos;
-	Vector3_Q12 prevPos;
-	Vector3_Q12 camSpacePos;
-	Vector3_Q12 scale;
-	Vector3_16 ang;
+	Vector3 pos; // 0x5c
+	Vector3 prevPos;
+	Vector3 camSpacePos;
+	Vector3 scale;
+	Vector3_16 ang; // 0x8c
 	Vector3_16 motionAng;
-	Fix12i horzSpeed;
+	Fix12i horzSpeed; // 0x98
 	Fix12i vertAccel;
 	Fix12i termVel;
-	Vector3_Q12 speed;
-	unsigned flags;
-	Fix12i rangeOffsetY;
-	Fix12i rangeAsr3;
-	Fix12i drawDistAsr3;
-	Fix12i unkc0Asr3;
+	Vector3 speed;  // 0xa4
+	unsigned flags; // 0xb0
+	Fix12i rangeOffsetY; // 0xb4
+	Fix12i rangeAsr3;    // 0xb8
+	Fix12i drawDistAsr3; // 0xbc
+	Fix12i unkc0Asr3;    // 0xc0
 	unsigned unkc4;
 	unsigned unkc8;
 	char areaID; //it is signed
@@ -161,16 +162,16 @@ struct Actor : public ActorBase				//internal name: dActor
 
 	Actor();
 
-	virtual int  InitResources();
+	virtual int  InitResources() override;
 	virtual bool BeforeInitResources() override;
 	virtual void AfterInitResources(unsigned vfSuccess) override;
-	virtual int  CleanupResources();
+	virtual int  CleanupResources() override;
 	virtual bool BeforeCleanupResources() override;
 	virtual void AfterCleanupResources(unsigned vfSuccess) override;
-	virtual int  Behavior();
+	virtual int  Behavior() override;
 	virtual bool BeforeBehavior() override;
 	virtual void AfterBehavior(unsigned vfSuccess) override;
-	virtual int  Render();
+	virtual int  Render() override;
 	virtual bool BeforeRender() override;
 	virtual void AfterRender(unsigned vfSuccess) override;
 	virtual ~Actor();
@@ -186,7 +187,7 @@ struct Actor : public ActorBase				//internal name: dActor
 	virtual void OnHitByMegaChar(Player& megaChar);
 	virtual void Virtual70(Actor& attacker);
 	virtual Fix12i OnAimedAtWithEgg();
-	virtual Vector3_Q12 OnAimedAtWithEggReturnVec();
+	virtual Vector3 OnAimedAtWithEggReturnVec();
 
 	bool IsTooFarAwayFromPlayer(Fix12i tooFar);
 	void MakeVanishLuigiWork(CylinderClsn& cylClsn);
@@ -198,16 +199,16 @@ struct Actor : public ActorBase				//internal name: dActor
 
 	void BigLandingDust(bool doRaycast);
 	void LandingDust(bool doRaycast);
-	void DisappearPoofDustAt(const Vector3_Q12& vec);
+	void DisappearPoofDustAt(const Vector3& vec);
 	void SmallPoofDust();
-	void PoofDustAt(const Vector3_Q12& vec);
+	void PoofDustAt(const Vector3& vec);
 	void PoofDust(); //calls the two above function
 
 	void UntrackStar();
-	Actor* UntrackAndSpawnStar(unsigned trackStarID, unsigned starID, const Vector3_Q12& spawnPos, unsigned howToSpawnStar);
+	Actor* UntrackAndSpawnStar(unsigned trackStarID, unsigned starID, const Vector3& spawnPos, unsigned howToSpawnStar);
 	unsigned TrackStar(unsigned starID, unsigned starType); //starType=1: silver star, 2: star //returns star ID or 0xff if starID != STAR_ID
 
-	void Earthquake(const Vector3_Q12& source, Fix12i magnitude);
+	void Earthquake(const Vector3& source, Fix12i magnitude);
 	short ReflectAngle(Fix12i normalX, Fix12i normalZ, short angToReflect);
 
 	bool BumpedUnderneathByPlayer(Player& player); //assumes there is a collision in the first place
@@ -229,15 +230,64 @@ struct Actor : public ActorBase				//internal name: dActor
 	//You cannot afford to spawn a Super Mushroom if there are 0 uses of the model's SharedFilePtr and the player already went super.
 	//If you do, particle color glitches will happen!
 
-	Actor* SpawnNumber(const Vector3_Q12& pos, unsigned number, bool isRed, unsigned arg3, unsigned arg4);
-	static Actor* Spawn(unsigned actorID, unsigned param1, const Vector3_Q12& pos, const Vector3_16* rot, int areaID, int deathTableID);
-	Actor* Next(); //next in the linked list. Returns the 1st object if given a nullptr. Returns a nullptr if given the last actor
+	Actor* SpawnNumber(const Vector3& pos, unsigned number, bool isRed, unsigned arg3, unsigned arg4);
+	static Actor* Spawn(unsigned actorID, unsigned param1, const Vector3& pos, const Vector3_16* rot, int areaID, int deathTableID);
+	static Actor* Next(const Actor* actor); //next in the linked list. Returns the 1st object if given a nullptr. Returns a nullptr if given the last actor
 	static Actor* FindWithID(unsigned id);
 	static Actor* FindWithActorID(unsigned actorID, Actor* searchStart); //searchStart is not included.
 
+	static inline Actor* First() { return Next(nullptr); }
+	static inline Actor* FirstWithActorID(unsigned actorID) { return FindWithActorID(actorID, nullptr); }
+
+	template<typename F>
+    static inline void ForEach(F&& f)
+    {
+        for (Actor* actor = First(); actor != nullptr; actor = Next(actor))
+            f(*actor);
+    }
+
+    template<typename F>
+    static inline void ForEach(uint16_t actorID, F&& f)
+    {
+        for (Actor* actor = FirstWithActorID(actorID); actor != nullptr; actor = FindWithActorID(actorID, actor))
+            f(*actor);
+    }
 };
 
 
+struct BaseSpawnInfo
+{
+	ActorBase* (*spawnFunc)();
+	short behavPriority;
+	short renderPriority;
+};
+
+// the player actually uses this one, but i'm not sure if behavPriority and renderPriority are named correctly
+struct SpawnInfo : BaseSpawnInfo
+{
+	unsigned flags;
+	Fix12i rangeOffsetY;
+	Fix12i range;
+	Fix12i drawDist;
+	Fix12i unkc0;
+};
+
+extern BaseSpawnInfo* (*ACTOR_SPAWN_INFO_TABLE_PTR)[];
+
+// the pointer to Player's SpawnInfo2 is only read  in Actor::Actor after the first time
+
+// Player's SpawnInfo2 is at 0x0210a704
+// struct SpawnInfo2
+// {
+// 	ActorBase* (*spawnFunc)();
+// 	uint16_t actorID;
+// 	uint16_t unk06;
+// 	unsigned flags;      // 08
+// 	Fix12i rangeOffsetY; // 0c
+// 	Fix12i range;        // 10
+// 	Fix12i drawDist;     // 14
+// 	Fix12i unkc0;        // 18
+// };
 
 
 #endif // SM64DS_ACTOR_INCLUDED

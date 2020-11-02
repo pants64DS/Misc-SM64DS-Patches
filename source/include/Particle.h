@@ -1,5 +1,7 @@
-#include "SM64DS_Common.h"
+#ifndef SM64DS_PARTICLE_INCLUDED
+#define SM64DS_PARTICLE_INCLUDED
 
+#include "SM64DS_Common.h"
 
 namespace Particle
 {
@@ -195,34 +197,34 @@ namespace Particle
 	};
 	
 	struct EffectData {};
-	using EffectFuncPtr = void(*)(EffectData& data, char*, Vector3_Q12& velAsr4);
+	using EffectFuncPtr = void(*)(EffectData& data, char*, Vector3& velAsr4);
 	struct Drift : public EffectData
 	{
-		static void Func(EffectData& data, char*, Vector3_Q12& velAsr4);
+		static void Func(EffectData& data, char*, Vector3& velAsr4);
 		Vector3_16f sysVelAsr4;
 		constexpr Drift(const Vector3_16f& velAsr4) : sysVelAsr4(velAsr4) {}
 	};
 	struct Brownian : public EffectData
 	{
-		static void Func(EffectData& data, char*, Vector3_Q12& velAsr4);
+		static void Func(EffectData& data, char*, Vector3& velAsr4);
 		Vector3_16f mag;
 		uint16_t period; //number of frames between velocity changes (WARNING: DENOMINATOR)
 	};
 	struct Effect2 : public EffectData
 	{
-		static void Func(EffectData& data, char*, Vector3_Q12& velAsr4);
+		static void Func(EffectData& data, char*, Vector3& velAsr4);
 	};
 	struct Effect3 : public EffectData
 	{
-		static void Func(EffectData& data, char*, Vector3_Q12& velAsr4);
+		static void Func(EffectData& data, char*, Vector3& velAsr4);
 	};
 	struct Effect4 : public EffectData
 	{
-		static void Func(EffectData& data, char*, Vector3_Q12& velAsr4);
+		static void Func(EffectData& data, char*, Vector3& velAsr4);
 	};
 	struct Effect5 : public EffectData
 	{
-		static void Func(EffectData& data, char*, Vector3_Q12& velAsr4);
+		static void Func(EffectData& data, char*, Vector3& velAsr4);
 	};
 	
 	struct Effect
@@ -307,9 +309,9 @@ namespace Particle
 			Particle* prev;
 		};
 		ListNode node;
-		Vector3_Q12 posAsr3;
-		Vector3_Q12 offsetAsr3;
-		Vector3_Q12 speedAsr3;
+		Vector3 posAsr3;
+		Vector3 offsetAsr3;
+		Vector3 speedAsr3;
 		uint16_t lifetime;
 		uint16_t age;
 		Fix12i scale;
@@ -359,7 +361,7 @@ namespace Particle
 		List particleList2;
 		SysDef* sysDefPtr;
 		unsigned unk1c;
-		Vector3_Q12 posAsr3;
+		Vector3 posAsr3;
 		unsigned unk2c;
 		uint16_t unk30;
 		uint8_t unk32;
@@ -447,7 +449,7 @@ namespace Particle
 		uint16_t unk2c;
 		uint16_t unk2e;
 		
-		System* AddSystem(int particleID, Vector3_Q12& posAsr3);
+		System* AddSystem(int particleID, Vector3& posAsr3);
 		static bool LoadTex(unsigned fileID, unsigned newTexID);
 		static void UnloadNewTexs();
 	};
@@ -508,3 +510,5 @@ extern "C"
 	extern Particle::SysTracker* PARTICLE_SYS_TRACKER;
 	extern unsigned PARTICLE_RNG_STATE; //x => x * 0x5eedf715 + 0x1b0cb173
 }
+
+#endif

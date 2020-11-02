@@ -1,6 +1,7 @@
 build
 bak
 source/wip
+todo.txt
 *.nds
 *.bin
 *.elf

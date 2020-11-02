@@ -12,6 +12,7 @@
 #include "Sound.h"
 #include "Save.h"
 #include "Input.h"
+#include "Memory.h"
 
 #define NOINLINE __attribute__((noinline))
 #define NAKED __attribute__((naked))
@@ -112,9 +113,9 @@ struct Enemy : public Actor
 		UY_SPITTING = 3
 	};
 	
-	Vector3_Q12 floorNormal;
-	Vector3_Q12 wallNormal;
-	Vector3_Q12 unkNormal; //ceiling?
+	Vector3 floorNormal;
+	Vector3 wallNormal;
+	Vector3 unkNormal; //ceiling?
 	unsigned unk0f8;
 	unsigned unk0fc;
 	uint16_t stateTimer;
@@ -164,10 +165,10 @@ struct CapEnemy : public Enemy
 	bool DestroyIfCapNotNeeded(); //returns true if the cap is needed (player is different character than cap or 0x0209f2d8 has a 0)
 	int GetCapState(); //returns 2 if obj+0x111 = 0, else 0 if dead or capID == player character, else 1
 	CapEnemy* RespawnIfHasCap(); //nullptr if failed
-	bool GetCapEatenOffIt(const Vector3_Q12& offset); //returns whether there was a cap and the cap is not the original object
-	Actor* ReleaseCap(const Vector3_Q12& offset); //returns the ptr to the cap if cap was released, ptr to original obj else.
-	void RenderCapModel(const Vector3_Q12* scale);
-	void UpdateCapPos(const Vector3_Q12& offsetPos, const Vector3_16& rot);
+	bool GetCapEatenOffIt(const Vector3& offset); //returns whether there was a cap and the cap is not the original object
+	Actor* ReleaseCap(const Vector3& offset); //returns the ptr to the cap if cap was released, ptr to original obj else.
+	void RenderCapModel(const Vector3* scale);
+	void UpdateCapPos(const Vector3& offsetPos, const Vector3_16& rot);
 	Actor* AddCap(unsigned capID);
 	void UnloadCapModel();
 	
@@ -201,7 +202,7 @@ struct PathPtr
 	PathPtr();
 	
 	void FromID(unsigned pathID);
-	void GetPt(Vector3_Q12& vF, unsigned index);
+	void GetPt(Vector3& vF, unsigned index);
 	unsigned NumPts();
 };
 
@@ -212,7 +213,7 @@ struct BezierPathIter
 	Fix12s tinyStep;
 	Fix12i step;
 	Fix12i currTime;
-	Vector3_Q12 pos;
+	Vector3 pos;
 	
 	bool Advance();
 };
@@ -248,10 +249,10 @@ struct View : public ActorDerived		//internal name: dView; done
 //vtable at 0x0208E730
 struct Clipper
 {
-	Vector3_Q12 unk04;
-	Vector3_Q12 unk10;
-	Vector3_Q12 unk1c;
-	Vector3_Q12 unk28;
+	Vector3 unk04;
+	Vector3 unk10;
+	Vector3 unk1c;
+	Vector3 unk28;
 	unsigned unk34;
 	unsigned unk38;
 	unsigned unk3c;
@@ -322,16 +323,16 @@ struct Camera : public View				//internal name: dCamera
 	};
 
 	
-	Vector3_Q12 lookAt;
-	Vector3_Q12 pos;
-	Vector3_Q12 ownerPos;
-	Vector3_Q12 unk0a4;
-	Vector3_Q12 savedLookAt;	//Saved to at talk
-	Vector3_Q12 savedPos;		//Saved to at talk
-	Vector3_Q12 unk0c8;			//Player's front lookAt?
-	Vector3_Q12 unk0d4;			//Player's front pos?
-	Vector3_Q12 unk0e0;			//Raycast result save (when the player becomes invisible to the camera)
-	Vector3_Q12 unk0ec;			//Raycast result save (when the player becomes invisible to the camera)
+	Vector3 lookAt;
+	Vector3 pos;
+	Vector3 ownerPos;
+	Vector3 unk0a4;
+	Vector3 savedLookAt;	//Saved to at talk
+	Vector3 savedPos;		//Saved to at talk
+	Vector3 unk0c8;			//Player's front lookAt?
+	Vector3 unk0d4;			//Player's front pos?
+	Vector3 unk0e0;			//Raycast result save (when the player becomes invisible to the camera)
+	Vector3 unk0ec;			//Raycast result save (when the player becomes invisible to the camera)
 	Fix12i aspectRatio;		//Aspect ratio, default = 1.33 (4:3)
 	unsigned unk0fc;		//Clipper related (near+far)
 	unsigned unk100;		//Clipper related
@@ -345,7 +346,7 @@ struct Camera : public View				//internal name: dCamera
 	Actor* unk114;			//Set at special camera scene? Set to King Bomb-Omb for example
 	Actor* unk118;			//Another unknown actor
 	unsigned unk11c;		//Related to unk118, set to 0xDFE60 at 0x02009F3C
-	Vector3_Q12 unk120;			//unk118's or (if unk118 == 0) unk114's position vector
+	Vector3 unk120;			//unk118's or (if unk118 == 0) unk114's position vector
 	Fix12i unk12c;			//Distance to unk114?
 	Fix12i unk130;			//Linear camera movement interpolator (only for unk114?) that (when entering a different camera view like at the top of BoB) interpolates from 0x0 to 0x100 and backwards when leaving. As a result, it also indicates whether the owner is in a special camera scene. unk114 is linked later during interpolation.
 	Fix12i unk134;			//Ground pound camera jitter offset. Starts at 0xC000 and vibrates back and forth with alternating signs until it reaches 0.
@@ -353,7 +354,7 @@ struct Camera : public View				//internal name: dCamera
 	CameraDef* defaultCamDef;
 	CameraDef* currCamDef;
 	LevelFile::View* currView;
-	Vector3_Q12* pausePos;
+	Vector3* pausePos;
 	unsigned unk14c;
 	unsigned unk150;
 	unsigned flags;
@@ -608,7 +609,7 @@ struct Minimap : public ActorDerived //ActorID = 0x14f
 	unsigned unk1e8;
 	unsigned unk1ec;
 	unsigned unk1f0;
-	Vector3_Q12 center;
+	Vector3 center;
 	Matrix2x2 arrowMat;
 	unsigned unk210;
 	Fix12i targetInvScale;
@@ -631,7 +632,10 @@ struct Minimap : public ActorDerived //ActorID = 0x14f
 	uint8_t arrowType;
 	uint8_t unk252;
 	uint8_t unk253;
-	unsigned unk254;
+	uint8_t unk254; // some counter
+	uint8_t unk255;
+	uint8_t unk256;
+	uint8_t unk257;
 };
 
 struct LaunchStar;
@@ -799,8 +803,8 @@ struct Player : public Actor
 	State* nextState;
 	unsigned unk37c;
 	WithMeshClsn wmClsn;
-	Vector3_Q12 unk53c;
-	Vector3_Q12 unk540; //mirrors the player's position?
+	Vector3 unk53c;
+	Vector3 unk540; //mirrors the player's position?
 	unsigned unk554;
 	unsigned unk558;
 	unsigned unk55c;
@@ -886,7 +890,7 @@ struct Player : public Actor
 	uint8_t playerID; //always 0 in single player mode
 	uint8_t unk6d9;
 	uint8_t unk6da;
-	uint8_t unk6db;
+	uint8_t renderedChar;
 	uint8_t prevHatChar; // 0x6DC
 	uint8_t currHatChar; // 0x6DD
 	bool isInAir;
@@ -941,24 +945,29 @@ struct Player : public Actor
 	uint16_t unk73e;
 	Fix12i toonIntensity;
 	unsigned unk744;
-	Vector3_Q12 lsPos; //0x748
-	Vector3_Q12 lsInitPos; //0x754
-	uint16_t unk760; 
-	uint8_t lsState0Timer; //0x762
-	uint8_t launchState; //0x763
+	unsigned unk748;
+	unsigned unk74c;
+	unsigned unk750;
+	unsigned unk754;
+	unsigned unk758;
+	uint16_t unk75c;
+	short spineAngleOffsY; // is added to bodyModels[GetBodyModelID(param1 & 0xff, false)]->data.bones[8].rot.y
+	short spineAngleOffsZ; // is added to bodyModels[GetBodyModelID(param1 & 0xff, false)]->data.bones[8].rot.z
+	uint16_t unk762;
 	LaunchStar* lsPtr; //0x764
-	union
-	{
-		BezierPathIter lsPathIt;
-		struct
-		{
-			Vector3_16 lsDiffAng; //0x768
-			Vector3_16 lsInitAng; //0x76e
-		};
-	};
 	
 	static SharedFilePtr* ANIM_PTRS[0x308];
-	
+
+	Player();
+
+	virtual int  InitResources() override;
+	virtual int  CleanupResources() override;
+	virtual int  Behavior() override;
+	virtual int  Render() override;
+	virtual void Virtual30() override;
+	virtual ~Player() override;
+	virtual unsigned OnYoshiTryEat() override;
+
 	//implemented in LaunchStar.cpp
 	bool LS_Init();
 	bool LS_Behavior();
@@ -970,9 +979,9 @@ struct Player : public Actor
 	void TurnOffToonShading(unsigned character);
 	
 	bool Unk_020bea94();
-	unsigned GetBodyModelID(unsigned character, bool checkMetalStateInsteadOfWhetherUsingModel);
+	unsigned GetBodyModelID(unsigned character, bool checkMetalStateInsteadOfWhetherUsingModel) const;
 	void SetAnim(unsigned animID, int flags, Fix12i animSpeed, unsigned startFrame);
-	void ShowMessage(ActorBase& speaker, unsigned msgIndex, const Vector3_Q12& lookAt, unsigned arg3, unsigned arg4);
+	void ShowMessage(ActorBase& speaker, unsigned msgIndex, const Vector3& lookAt, unsigned arg3, unsigned arg4);
 	bool StartTalk(ActorBase& speaker, bool noButtonNeeded); //true iff the talk actually started.
 	int GetTalkState();
 	bool IsOnShell(); //if not on shell, reset shell ptr
@@ -980,11 +989,13 @@ struct Player : public Actor
 	void Shock(unsigned damage);
 	void RegisterEggCoinCount(unsigned numCoins, bool includeSilverStar, bool includeBlueCoin);
 	//speed is multiplied by constant at 0x020ff128+charID*2 and divided by 50 (? could be 25, could be 100).
-	void Hurt(const Vector3_Q12& source, unsigned damage, Fix12i speed, unsigned arg4, unsigned presetHurt, unsigned spawnOuchParticles);
+	void Hurt(const Vector3& source, unsigned damage, Fix12i speed, unsigned arg4, unsigned presetHurt, unsigned spawnOuchParticles);
 	void Heal(int health);
 	void Bounce(Fix12i bounceInitVel);
 	bool ChangeState(Player::State& state);
 };
+
+static_assert(sizeof(Player) == 0x768, "sizeof(Player) is not correct!");
 
 namespace Event
 {
@@ -1077,7 +1088,7 @@ extern "C"
 	
 	extern char ACTOR_BANK_SETTINGS[7];
 	
-	extern Vector3_Q12 CAM_SPACE_CAM_POS_ASR_3; //constant <0.0, 64.0, -112.0>
+	extern Vector3 CAM_SPACE_CAM_POS_ASR_3; //constant <0.0, 64.0, -112.0>
 	
 	extern ArchiveInfo ARCHIVE_INFOS[13];
 	
@@ -1115,6 +1126,18 @@ extern "C"
 	extern ActorBase::ProcessingListNode* FIRST_BEHAVIOR_LIST_NODE;
 	extern ActorBase::ProcessingListNode* FIRST_RENDER_LIST_NODE;
 	extern EnemyDeathFunc ENEMY_DEATH_FUNCS[8];
+
+	extern uint8_t GAME_PAUSED; // 0 = not paused, 1 = paused, 2 = unpausing
+
+	struct
+	{
+		// the return value is usually 1
+		int (*func)(Camera& cam, char* params, uint16_t minFrame, uint16_t maxFrame);
+		unsigned unk04;
+	}
+	extern KS_CAMERA_FUNCTIONS[39];
+	extern unsigned KS_FRAME_COUNTER;
+	extern char* RUNNING_KUPPA_SCRIPT; // nullptr if no script is running
 	
 	bool LoadArchive(int archiveID);
 	
@@ -1132,12 +1155,9 @@ extern "C"
 	void LoadSilverStarAndNumber();
 	void LinkSilverStarAndStarMarker(Actor* starMarker, Actor* silverStar);
 	
-	extern char* KuppaPointer;
-
+	short ReadUnalignedShort(char* from);
 	void RunKuppaScript(char* address);
 	void EndKuppaScript();
-
-	extern uint8_t GAME_PAUSED;			// 0 = not paused, 1 = paused, 2 = unpausing
 
 }
 
@@ -1151,23 +1171,23 @@ extern "C"
 
 //Super mushroom tag vtable: 02108cf4
 
-/*void Vec3_InterpCubic(Vector3_Q12* vF, Vector3_Q12* v0, Vector3_Q12* v1, Vector3_Q12* v2, Vector3_Q12* v3, int t) NAKED; //0208f670, 70f60822
+/*void Vec3_InterpCubic(Vector3* vF, Vector3* v0, Vector3* v1, Vector3* v2, Vector3* v3, int t) NAKED; //0208f670, 70f60822
 bool BezPathIter_Advance(BezierPathIter* it) NAKED; //0208f840, 40f80822
 
-void Vec3_Interp(Vector3_Q12* vF, Vector3_Q12* v1, Vector3_Q12* v2, int t) NAKED; //02090dd0, d00d0922
-short Vec3_VertAngle(Vector3_Q12* v1, Vector3_Q12* v2) NAKED; //0203b770, 70b70322
-short Vec3_HorzAngle(Vector3_Q12* v1, Vector3_Q12* v2) NAKED; //0203b7ac, acb70322
-void Vec3_LslInPl(Vector3_Q12* vF, int amount) NAKED; //0203d0a0, a0d00322
-int  Vec3_HorzDist(Vector3_Q12* v1, Vector3_Q12* v2) NAKED; //0203cf40, 40cf0322
-int  Vec3_Dist(Vector3_Q12* v1, Vector3_Q12* v2) NAKED; //0203cfdc, dccf0322
-void Vec3_MulInPl(Vector3_Q12* v, int scalar) NAKED; //0203d224, 24d20322
-void Vec3_Sub(Vector3_Q12* vF, Vector3_Q12* v1, Vector3_Q12* v2) NAKED; //0203d2fc, fcd20322
-void Vec3_Add(Vector3_Q12* vF, Vector3_Q12* v1, Vector3_Q12* v2) NAKED; //0203d340, 40d30322
+void Vec3_Interp(Vector3* vF, Vector3* v1, Vector3* v2, int t) NAKED; //02090dd0, d00d0922
+short Vec3_VertAngle(Vector3* v1, Vector3* v2) NAKED; //0203b770, 70b70322
+short Vec3_HorzAngle(Vector3* v1, Vector3* v2) NAKED; //0203b7ac, acb70322
+void Vec3_LslInPl(Vector3* vF, int amount) NAKED; //0203d0a0, a0d00322
+int  Vec3_HorzDist(Vector3* v1, Vector3* v2) NAKED; //0203cf40, 40cf0322
+int  Vec3_Dist(Vector3* v1, Vector3* v2) NAKED; //0203cfdc, dccf0322
+void Vec3_MulInPl(Vector3* v, int scalar) NAKED; //0203d224, 24d20322
+void Vec3_Sub(Vector3* vF, Vector3* v1, Vector3* v2) NAKED; //0203d2fc, fcd20322
+void Vec3_Add(Vector3* vF, Vector3* v1, Vector3* v2) NAKED; //0203d340, 40d30322
 
-void Vec3_MulMat3x3(Vector3_Q12* v, Matrix3x3* m, Vector3_Q12* vF) NAKED; //020525a0, a0250522
+void Vec3_MulMat3x3(Vector3* v, Matrix3x3* m, Vector3* vF) NAKED; //020525a0, a0250522
 void Mat3x3_Mul(Matrix3x3* m2, Matrix3x3* m1, Matrix3x3* mF) NAKED; //02052624, 25260522
 void Mat4x3_Identity(Matrix4x3* mF) NAKED; //020527c0, c0270522
-void Vec3_MulMat4x3(Vector3_Q12* v, Matrix4x3* m, Vector3_Q12* vF) NAKED; //02052858, 58280522
+void Vec3_MulMat4x3(Vector3* v, Matrix4x3* m, Vector3* vF) NAKED; //02052858, 58280522
 void Mat4x3_Mul(Matrix4x3* m2, Matrix4x3* m1, Matrix4x3* mF) NAKED; //02052914, 14290522
 
 void Model_Update(Model* mdl) NAKED; //0201686c, 6c680122
@@ -1176,7 +1196,7 @@ void Anim_Change(Model* mdl, char* newAnimFile, Animation::Flags flags, int anim
 
 bool Player_ChangeState(Player* player, Player::State* state) NAKED; //020e30a0, a0300e22
 void Player_ChangeAnim(Player* player, int animID, Animation::Flags flags, int animSpeed, int startFrame) NAKED;//020bef2c, 2cef0b22
-void Sound_Play0(int soundID, Vector3_Q12* camSpacePos) NAKED; //0201264c, 4c260122
-void Sound_Play3(int soundID, Vector3_Q12* camSpacePos) NAKED; //02012664, 64260122
-void Sound_Play(int arg0, int soundID, Vector3_Q12* camSpacePos); //02012590, 90250122*/
+void Sound_Play0(int soundID, Vector3* camSpacePos) NAKED; //0201264c, 4c260122
+void Sound_Play3(int soundID, Vector3* camSpacePos) NAKED; //02012664, 64260122
+void Sound_Play(int arg0, int soundID, Vector3* camSpacePos); //02012590, 90250122*/
 #endif // SM64DS_2_H_INCLUDED

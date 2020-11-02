@@ -130,12 +130,12 @@ struct MeshCollider
 	unsigned clsnID;
 	//clsnActor is the mesh collider's actor for some reason
 	//beforeClsnCallback is called if there was a collision the previous frame.
-	void(*beforeClsnCallback)(MeshCollider& clsn, Actor* clsnActor, ClsnResult& wmClsnResult, Vector3_Q12* posToUpdate, Vector3_16* motionAngToUpdate, Vector3_16* angToUpdate);
+	void(*beforeClsnCallback)(MeshCollider& clsn, Actor* clsnActor, ClsnResult& wmClsnResult, Vector3* posToUpdate, Vector3_16* motionAngToUpdate, Vector3_16* angToUpdate);
 	void(*afterClsnCallback)(MeshCollider& clsn, Actor* clsnActor, Actor* otherActor);
 	char* clsnFile;
 	CLPS_Block* clpsBlock;
-	Vector3_Q12 unkVec28;
-	Vector3_Q12 unkVec34;
+	Vector3 unkVec28;
+	Vector3 unkVec34;
 	unsigned unk40;
 	Fix12i unk44;
 	unsigned unk48;
@@ -173,8 +173,8 @@ struct MovingMeshCollider : public MeshCollider
 	virtual ~MovingMeshCollider();
 	
 	static char* LoadFile(SharedFilePtr& filePtr);
-	void SetFile(char* clsnFile, Matrix4x3& mat, Fix12i scale, short angleY, CLPS_Block& clps);
-	void Transform(Matrix4x3& mat, short rotY);
+	void SetFile(char* clsnFile, const Matrix4x3& mat, Fix12i scale, short angleY, CLPS_Block& clps);
+	void Transform(const Matrix4x3& mat, short rotY);
 };
 
 struct CylinderClsn
@@ -214,7 +214,7 @@ struct CylinderClsn
 
 	Fix12i radius;
 	Fix12i height;
-	Vector3_Q12 pushback;
+	Vector3 pushback;
 	unsigned flags1;
 	unsigned vulnerableFlags;
 	unsigned hitFlags;
@@ -225,7 +225,7 @@ struct CylinderClsn
 	
 	CylinderClsn();
 	virtual ~CylinderClsn();
-	virtual Vector3_Q12& GetPos();
+	virtual Vector3& GetPos();
 	virtual unsigned GetOwnerID();
 	
 	void Init(Actor* actor, Fix12i radius, Fix12i height, unsigned flags, unsigned vulnFlags);
@@ -235,21 +235,21 @@ struct CylinderClsn
 
 struct CylinderClsnWithPos : CylinderClsn
 {
-	Vector3_Q12 pos;
+	Vector3 pos;
 	
 	CylinderClsnWithPos();
 	virtual ~CylinderClsnWithPos();
-	virtual Vector3_Q12& GetPos() override;
+	virtual Vector3& GetPos() override;
 	
-	void Init(Actor* actor, const Vector3_Q12& pos, Fix12i radius, Fix12i height, unsigned flags, unsigned vulnFlags); //pos is transformed by the object's Y angle
-	void SetPosRelativeToActor(const Vector3_Q12& pos);
+	void Init(Actor* actor, const Vector3& pos, Fix12i radius, Fix12i height, unsigned flags, unsigned vulnFlags); //pos is transformed by the object's Y angle
+	void SetPosRelativeToActor(const Vector3& pos);
 };
 
 struct ClsnResult
 {
 	unsigned* vTable;
 	CLPS clps;
-	Vector3_Q12 normal; //for the floor
+	Vector3 normal; //for the floor
 	short triangleID; //0xffff if in air
 	short clsnID; //not constant per object, 0x18 if in air (only 24 mesh colliders can be active at a time)
 	unsigned objID;
@@ -282,34 +282,34 @@ struct BgCh //That's the internal name, and I didn't know what else to call it s
 
 struct RaycastGround : public BgCh
 {
-	Vector3_Q12 pos;
+	Vector3 pos;
 	Fix12i clsnPosY;
 	bool hadCollision;
 	Fix12i unk4c; // 0x1f4000
 	
 	RaycastGround();
 	~RaycastGround();
-	void SetObjAndPos(const Vector3_Q12& pos, Actor* obj);
+	void SetObjAndPos(const Vector3& pos, Actor* obj);
 	bool DetectClsn();
 };
 
 struct RaycastLine : public BgCh
 {
-	Vector3_Q12 pos0; //located at 0x38
-	Vector3_Q12 pos1;
+	Vector3 pos0; //located at 0x38
+	Vector3 pos1;
 	bool hadCollision;
-	Vector3_Q12 clsnPos; //set to pos0 before collision
+	Vector3 clsnPos; //set to pos0 before collision
 	Fix12i length; //of line
 	unsigned* vTable3;
-	Vector3_Q12 average;
+	Vector3 average;
 	Fix12i halfLength;
 	
 	RaycastLine();
 	~RaycastLine();
-	void SetObjAndLine(const Vector3_Q12& pos0, const Vector3_Q12& pos1, Actor* obj);
+	void SetObjAndLine(const Vector3& pos0, const Vector3& pos1, Actor* obj);
 	bool DetectClsn();
 	/* WARNING: This function definition is wrong, it seems to be static, void and takes two args
-	Vector3_Q12 GetClsnPos();
+	Vector3 GetClsnPos();
 	*/
 };
 
@@ -327,15 +327,15 @@ struct SphereClsn : public BgCh
 	
 	SphereClsn();
 	~SphereClsn();
-	void SetObjAndSphere(const Vector3_Q12& pos, Fix12i radius, Actor* obj);
+	void SetObjAndSphere(const Vector3& pos, Fix12i radius, Actor* obj);
 	bool DetectClsn();
 	
 	unsigned* sphVTable;
-	Vector3_Q12 pos;
+	Vector3 pos;
 	Fix12i radius;
-	Vector3_Q12 pushback;
-	Vector3_Q12 pushback0;
-	Vector3_Q12 pushback1;
+	Vector3 pushback;
+	Vector3 pushback0;
+	Vector3 pushback1;
 	unsigned resultFlags;
 	ClsnResult floorResult;
 	ClsnResult wallResult;
