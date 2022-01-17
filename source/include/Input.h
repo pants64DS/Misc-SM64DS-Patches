@@ -56,6 +56,8 @@ struct InputRelated
 	unsigned unk20;
 };
 
+static_assert(sizeof(InputRelated) == 0x24);
+
 extern "C"
 {
 	extern Input INPUT_ARR[4];

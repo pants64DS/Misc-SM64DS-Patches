@@ -3,7 +3,7 @@
 // see shellSpeedAndRotation.s
 extern "C" Fix12i GetShellSpeedLimit(Fix12i limit, Player& player)
 {
-	if (player.wmClsn.sphere.floorResult.clps.IsWater())
+	if (player.wmClsn.sphere.floorResult.surfaceInfo.clps.IsWater())
 	{
 		if (player.horzSpeed < 0x18'000_f)
 			player.horzSpeed = 0x18'000_f;

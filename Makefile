@@ -20,22 +20,22 @@ endef
 #---------------------------------------------------------------------------------
 # path to tools
 #---------------------------------------------------------------------------------
-export PORTLIBS	:=	$(DEVKITPRO)/portlibs/arm
-export PATH		:=	$(DEVKITARM)/bin:$(PORTLIBS)/bin:$(PATH)
-LIBNDS	:=	$(DEVKITPRO)/libnds
+export PORTLIBS := $(DEVKITPRO)/portlibs/arm
+export PATH     := $(DEVKITARM)/bin:$(PORTLIBS)/bin:$(PATH)
+LIBNDS          := $(DEVKITPRO)/libnds
 
 #---------------------------------------------------------------------------------
 # the prefix on the compiler executables
 #---------------------------------------------------------------------------------
-PREFIX		:=	arm-none-eabi-
+PREFIX := arm-none-eabi-
 
-export CC	:=	$(PREFIX)gcc
-export CXX	:=	$(PREFIX)g++
-export AS	:=	$(PREFIX)as
-export AR	:=	$(PREFIX)ar
-export OBJCOPY	:=	$(PREFIX)objcopy
-export OBJDUMP	:=	$(PREFIX)objdump
-export LD	:=	$(PREFIX)ld
+export CC      := $(PREFIX)gcc
+export CXX     := $(PREFIX)g++
+export AS      := $(PREFIX)as
+export AR      := $(PREFIX)ar
+export OBJCOPY := $(PREFIX)objcopy
+export OBJDUMP := $(PREFIX)objdump
+export LD      := $(PREFIX)ld
 
 
 #---------------------------------------------------------------------------------
@@ -46,28 +46,27 @@ export LD	:=	$(PREFIX)ld
 # DATA is a list of directories containing binary files embedded using bin2o
 # GRAPHICS is a list of directories containing image files to be converted with grit
 #---------------------------------------------------------------------------------
-TARGET		:=	newcode
-BUILD		:=	build
-SOURCES		:=	source libfat_source
-INCLUDES	:=	include
-DATA		:=	data  
-GRAPHICS	:=	gfx  
+TARGET   := newcode
+BUILD    := build
+SOURCES  := source libfat_source
+INCLUDES := include
+DATA     := data  
+GRAPHICS := gfx  
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	
+ARCH :=
 
-CFLAGS	:=	-g -Wall -O2 --std=c++2a\
- 		-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
-		-ffast-math \
-		$(ARCH)
+CFLAGS := -Wall -Wextra -Werror -Wno-unused-parameter -Wno-parentheses -Wno-volatile \
+          -Os -march=armv5te -mtune=arm946e-s -fomit-frame-pointer -fwrapv \
+          $(ARCH) $(INCLUDE) -DARM9 -nodefaultlibs -I. -fno-builtin -c
 
-CFLAGS	+=	$(INCLUDE) -DARM9 -nodefaultlibs -I. -fno-builtin -c
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
+CXXFLAGS := $(CFLAGS) -std=c++20 -fno-exceptions \
+            -fno-rtti -fno-threadsafe-statics -faligned-new=4
 
-ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-T $(CURDIR)/../symbols.x -T $(CURDIR)/../linker.x -g $(ARCH) -Map newcode.map
+ASFLAGS := -g $(ARCH)
+LDFLAGS =  -T $(CURDIR)/../symbols.x -T $(CURDIR)/../linker.x -g $(ARCH) -Map $(TARGET).map
 
 ifdef CODEADDR
   LDFLAGS += -Ttext $(CODEADDR)
@@ -76,43 +75,42 @@ endif
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project (order is important)
 #---------------------------------------------------------------------------------
-#LIBS	:=  -lnds9 -lc -lgcc
-LIBS	:=  -lnds9 -lc
+#LIBS :=  -lnds9 -lc -lgcc
+LIBS :=  -lnds9 -lc
  
  
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS)  $(DEVKITARM) $(DEVKITARM)/arm-none-eabi 
+LIBDIRS := $(LIBNDS)  $(DEVKITARM) $(DEVKITARM)/arm-none-eabi 
 
 #---------------------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export OUTPUT := $(CURDIR)/$(TARGET)
 
-export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(GRAPHICS),$(CURDIR)/$(dir))
+export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
+                $(foreach dir,$(DATA),$(CURDIR)/$(dir)) \
+                $(foreach dir,$(GRAPHICS),$(CURDIR)/$(dir))
 
-export DEPSDIR	:=	$(CURDIR)/$(BUILD)
+export DEPSDIR := $(CURDIR)/$(BUILD)
 
-CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
-CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
-SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-PNGFILES	:=	$(foreach dir,$(GRAPHICS),$(notdir $(wildcard $(dir)/*.png)))
-BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+CFILES   := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+CPPFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
+SFILES   := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
+PNGFILES := $(foreach dir,$(GRAPHICS),$(notdir $(wildcard $(dir)/*.png)))
+BINFILES := $(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
 
-export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
-					$(PNGFILES:.png=.o) \
-					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+export OFILES := $(addsuffix .o,$(BINFILES)) \
+                 $(PNGFILES:.png=.o) \
+                 $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
  
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
-					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-					-I$(CURDIR)/$(BUILD)
+export INCLUDE := $(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
+                  $(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
  
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) -L$(DEVKITARM)/lib/gcc/arm-none-eabi/4.7.1
+export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib) -L$(DEVKITARM)/lib/gcc/arm-none-eabi/4.7.1
 
  
 .PHONY: $(BUILD) clean
@@ -121,7 +119,7 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) -L$(DEVKITARM)/lib/gcc
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
- 
+
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
@@ -143,28 +141,28 @@ $(OUTPUT).bin : $(OUTPUT).elf
 $(OUTPUT).sym : $(OUTPUT).elf
 	$(OBJDUMP) -t $< > $@
 	@echo written the symbol table ... $(notdir $@)
-	
+
 #---------------------------------------------------------------------------------
 %.elf: $(OFILES)
 	@echo linking $(notdir $@)
 	$(LD)  $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
 
 #---------------------------------------------------------------------------------
-%.bin.o	:	%.bin
+%.bin.o : %.bin
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
 	$(bin2o)
-	
+
 #---------------------------------------------------------------------------------
 %.o: %.cpp
 	@echo $(notdir $<)
 	$(CXX) -MMD -MP -MF $(DEPSDIR)/$*.d $(CXXFLAGS) -c $< -o $@ $(ERROR_FILTER)
-	
+
 #---------------------------------------------------------------------------------
 %.o: %.c
 	@echo $(notdir $<)
 	$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $< -o $@ $(ERROR_FILTER)
-	
+
 #---------------------------------------------------------------------------------
 %.o: %.s
 	@echo $(notdir $<)
@@ -181,8 +179,8 @@ $(OUTPUT).sym : $(OUTPUT).elf
 	grit $< -fts -o$*
 
 -include $(DEPSDIR)/*.d
- 
+
 #---------------------------------------------------------------------------------------
 endif
 #---------------------------------------------------------------------------------------
-	
+

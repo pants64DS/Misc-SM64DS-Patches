@@ -49,7 +49,7 @@ struct ActorBase //internal name: fBase
 	};
 
 	void* operator new(size_t count); //actor bases have their own heap
-	inline void operator delete(void* ptr) { Memory::Deallocate(ptr, Memory::gameHeapPtr); }
+	void operator delete(void* ptr) { Memory::Deallocate(ptr, Memory::gameHeapPtr); }
 
 	virtual int  InitResources(); // 0x020e558c
 	virtual bool BeforeInitResources();
@@ -68,6 +68,8 @@ struct ActorBase //internal name: fBase
 	virtual bool Virtual38(unsigned arg0, unsigned arg1);
 	virtual bool Virtual3c();
 	virtual ~ActorBase();
+
+	int Process(int (ActorBase::*callback)(), bool (ActorBase::*preCallback)(), void (ActorBase::*postCallback)(unsigned vfSuccess));
 
 	void Destroy();
 
@@ -139,9 +141,9 @@ struct Actor : public ActorBase				//internal name: dActor
 
 	ListNode listNode;
 	Vector3 pos; // 0x5c
-	Vector3 prevPos;
-	Vector3 camSpacePos;
-	Vector3 scale;
+	Vector3 prevPos; // 0x68
+	Vector3 camSpacePos; // 0x74
+	Vector3 scale; // 0x80
 	Vector3_16 ang; // 0x8c
 	Vector3_16 motionAng;
 	Fix12i horzSpeed; // 0x98
@@ -204,7 +206,10 @@ struct Actor : public ActorBase				//internal name: dActor
 	void PoofDustAt(const Vector3& vec);
 	void PoofDust(); //calls the two above function
 
+	[[deprecated("seems to have a second parameter, don't use until fixed")]]
 	void UntrackStar();
+
+	// trackStarID seems to be an address
 	Actor* UntrackAndSpawnStar(unsigned trackStarID, unsigned starID, const Vector3& spawnPos, unsigned howToSpawnStar);
 	unsigned TrackStar(unsigned starID, unsigned starType); //starType=1: silver star, 2: star //returns star ID or 0xff if starID != STAR_ID
 
@@ -222,8 +227,9 @@ struct Actor : public ActorBase				//internal name: dActor
 	Player* FarthestPlayer();
 	Fix12i DistToFPlayer();
 
-	void DropShadowScaleXYZ(ShadowModel& arg1, const Matrix4x3& arg2, Fix12i scaleX, Fix12i scaleY, Fix12i scaleZ, unsigned transparency);
-	void DropShadowRadHeight(ShadowModel& arg1, const Matrix4x3& arg2, Fix12i radius, Fix12i depth, unsigned transparency); //last argument is on a scale of 1 to 16.
+	// The opacity is from 0 to 30
+	void DropShadowScaleXYZ (ShadowModel& shadow, Matrix4x3& matrix, Fix12i scaleX, Fix12i scaleY, Fix12i scaleZ, unsigned opacity);
+	void DropShadowRadHeight(ShadowModel& shadow, Matrix4x3& matrix, Fix12i radius, Fix12i depth, unsigned opacity);
 
 	void UpdatePos(CylinderClsn* clsn); //Applies motion direction, vertical acceleration, and terminal velocity.
 	void UpdatePosWithOnlySpeed(CylinderClsn* clsn);//IMPORTANT!: When spawning a Super Mushroom, make sure to already have the model loaded before the player goes super!
@@ -236,24 +242,25 @@ struct Actor : public ActorBase				//internal name: dActor
 	static Actor* FindWithID(unsigned id);
 	static Actor* FindWithActorID(unsigned actorID, Actor* searchStart); //searchStart is not included.
 
-	static inline Actor* First() { return Next(nullptr); }
-	static inline Actor* FirstWithActorID(unsigned actorID) { return FindWithActorID(actorID, nullptr); }
+	static Actor* First() { return Next(nullptr); }
+	static Actor* FirstWithActorID(unsigned actorID) { return FindWithActorID(actorID, nullptr); }
 
 	template<typename F>
-    static inline void ForEach(F&& f)
+    static void ForEach(F&& f)
     {
         for (Actor* actor = First(); actor != nullptr; actor = Next(actor))
             f(*actor);
     }
 
     template<typename F>
-    static inline void ForEach(uint16_t actorID, F&& f)
+    static void ForEach(uint16_t actorID, F&& f)
     {
         for (Actor* actor = FirstWithActorID(actorID); actor != nullptr; actor = FindWithActorID(actorID, actor))
             f(*actor);
     }
 };
 
+static_assert(sizeof(Actor) == 0xd4, "sizeof(Actor) is incorrect!");
 
 struct BaseSpawnInfo
 {

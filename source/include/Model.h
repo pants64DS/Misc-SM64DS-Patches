@@ -54,12 +54,6 @@ extern "C"
 	extern volatile unsigned GXPORT_LIGHT_COLOR;
 	
 	extern uint16_t CHANGE_CAP_TOON_COLORS[0x20];
-	
-	MaterialChanger* MatChg_Construct(MaterialChanger* unk); //constructor
-	TextureSequence* TexSeq_Construct(TextureSequence* where);
-	ShadowModel* Shadow_Construct(ShadowModel* shadow); //constructor
-	ModelAnim* ModelAnim_Construct(ModelAnim* mdlAnim); //constructor
-	Model* Model_Construct(Model* where);
 }
 
 namespace Vram
@@ -191,6 +185,9 @@ struct Animation	//internal: FrameCtrl; done
 	void Advance();
 	bool Finished();
 
+	Animation(const Animation&) = delete;
+	Animation(Animation&&) = delete;
+
 	Flags GetFlags();
 	void SetFlags(Flags flags);
 	unsigned GetFrameCount();
@@ -280,8 +277,11 @@ struct ModelBase	//internal: Model; done
 	ModelBase();
 	virtual ~ModelBase();
 
-	virtual bool Virtual08(unsigned arg0, unsigned arg1, unsigned arg2) = 0;
+	ModelBase(const ModelBase&) = delete;
+	ModelBase(ModelBase&&) = delete;
 
+	bool SetFile(char* file, int arg1, int arg2);
+	virtual bool DoSetFile(char* file, int arg1, int arg2) = 0;
 };
 
 
@@ -295,12 +295,11 @@ struct Model : public ModelBase		//internal: SimpleModel
 	
 	Model();
 	virtual ~Model();
-	virtual bool Virtual08(unsigned arg0, unsigned arg1, unsigned arg2) override;
+	virtual bool DoSetFile(char* file, int arg1, int arg2) override;
 	virtual void UpdateVerts();
 	virtual void Virtual10(Matrix4x3& arg0);
-	virtual void Render(const Vector3* scale);
+	virtual void Render(const Vector3* scale = nullptr);
 	
-	bool SetFile(char* file, int arg1, int arg2);
 	static char* LoadFile(SharedFilePtr& filePtr);
 };
 
@@ -314,8 +313,8 @@ struct ModelAnim : public Model, Animation	//internal: ModelAnm
 	virtual ~ModelAnim();
 	virtual void UpdateVerts() override;
 	virtual void Virtual10(Matrix4x3& arg0) override;
-	virtual void Render(const Vector3* scale) override;							//Calls UpdateVerts and then Model::Render
-	virtual void Virtual18(unsigned arg0, const Vector3* scale);				//Calls Virtual10 and then Model::Render
+	virtual void Render(const Vector3* scale = nullptr) override; // Calls UpdateVerts and then Model::Render
+	virtual void Virtual18(unsigned arg0, const Vector3* scale);  // Calls Virtual10 and then Model::Render
 	
 	void SetAnim(char* animFile, int flags, Fix12i speed, unsigned startFrame);
 
@@ -341,7 +340,10 @@ struct ShadowModel : public ModelBase	//internal: ShadowModel; done
 	ModelComponents* modelDataPtr;
 	Matrix4x3* matPtr;
 	Vector3 scale;
-	unsigned unk1c;
+	uint8_t opacity;
+	uint8_t unk1d;
+	uint8_t unk1e;
+	uint8_t unk1f;
 	ShadowModel* prev;
 	ShadowModel* next;
 	
@@ -350,11 +352,13 @@ struct ShadowModel : public ModelBase	//internal: ShadowModel; done
 	bool InitCylinder();
 	bool InitCuboid();
 
-	virtual bool Virtual08(unsigned arg0, unsigned arg1, unsigned arg2) override;							//May only have 2 params, but then it wouldn't match ModelBase's declaration
+	// May only have 2 params, but then it wouldn't match ModelBase's declaration
+	virtual bool DoSetFile(char* file, int arg1, int arg2) override;
 
-	void InitModel(Matrix4x3* transform, Fix12i scaleX, Fix12i scaleY, Fix12i scaleZ, uint8_t arg4);
+	// The opacity is from 0 to 30
+	void InitModel(Matrix4x3* transform, Fix12i scaleX, Fix12i scaleY, Fix12i scaleZ, unsigned opacity);
 
-	static void Func_02015D38();
+	static void RenderAll();
 	static void Func_02015E14();
 
 };
@@ -366,7 +370,7 @@ struct CommonModel : public ModelBase	//internal: CommonModel; done
 
 	CommonModel();
 	virtual ~CommonModel();
-	virtual bool Virtual08(unsigned arg0, unsigned arg1, unsigned arg2) override;
+	virtual bool DoSetFile(char* file, int arg1, int arg2) override;
 
 	void Func_0201609C(unsigned arg0);
 	void Func_020160AC(unsigned arg0);
@@ -385,10 +389,10 @@ struct BlendModelAnim : public ModelAnim	//internal: BlendAnmModel
 	BlendModelAnim();
 	virtual ~BlendModelAnim();
 
-	virtual bool Virtual08(unsigned arg0, unsigned arg1, unsigned arg2) override;
+	virtual bool DoSetFile(char* file, int arg1, int arg2) override;
 	virtual void UpdateVerts() override;
 	virtual void Virtual10(Matrix4x3& arg0) override;
-	virtual void Render(const Vector3* scale) override;
+	virtual void Render(const Vector3* scale = nullptr) override;
 	virtual void Virtual18(unsigned arg0, const Vector3* scale) override;		//Calls Virtual10 and then Model::Render
 
 	//2 funcs missing

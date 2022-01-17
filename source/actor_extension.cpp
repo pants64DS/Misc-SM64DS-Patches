@@ -2,6 +2,8 @@
 #include <array>
 #include <type_traits>
 
+asm("offsetTable = 0x02000000");
+
 static_assert(alignof(ActorExtension) <= alignof(Actor));
 static_assert(std::is_trivially_destructible_v<ActorExtension>);
 
