@@ -312,6 +312,7 @@ struct SolidHeap : public Heap			//internal name: mHeap::SolidHeap_t
 
 };
 
+static_assert(__STDCPP_DEFAULT_NEW_ALIGNMENT__ == 4, "Compile with the -faligned-new=4 flag");
 
 /*
 	This is the namespace of memory functions you might use directly which are always safe. Since there are multiple layers between the allocation call and the heap's
@@ -363,36 +364,29 @@ namespace Memory
 	void Deallocate(void* ptr);											//Calls Deallocate on root heap (heap = 0)
 
 	//Custom functions simplifying reallocation
-	inline unsigned Reallocate(void* ptr, unsigned size, Heap* heap) {
-
-		if (!heap) {
-			heap = Memory::defaultHeapPtr;
-		}
+	inline unsigned Reallocate(void* ptr, unsigned size, Heap* heap)
+	{
+		if (!heap) heap = Memory::defaultHeapPtr;
 
 #ifdef SM64DS_SAFE_REALLOC
-		if (!Memory::defaultHeapPtr) {
+		if (!Memory::defaultHeapPtr)
 			return 0;
-		}
 #endif
 
 		return heap->Reallocate(ptr, size);
 
 	}
 
-	inline void* realloc(void* ptr, unsigned size) {
-
+	inline void* realloc(void* ptr, unsigned size)
+	{
 #ifdef SM64DS_SAFE_REALLOC
-		if (!Memory::defaultHeapPtr) {
-			return nullptr;
-		}
+		if (!Memory::defaultHeapPtr) return nullptr;
 #endif
 
-		if (!Memory::defaultHeapPtr->Reallocate(ptr, size)) {
+		if (!Memory::defaultHeapPtr->Reallocate(ptr, size))
 			return nullptr;
-		}else{
+		else
 			return ptr;
-		}
-		
 	}
 
 }

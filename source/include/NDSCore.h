@@ -116,12 +116,7 @@ namespace cstd
 	[[noreturn]] void _start(); //ROM entry point, resets the NDS on return = 0x02004800
 	void __builtin_trap(); //Abort functionality. Triggers an undefined instruction (UDF)
 	void __assert(const char* file, const char* line, const char* exp, int eval); //Assertion that causes hangup if eval != 0
-
-	extern unsigned sine_table;   //u16 per value, 4096 values, 2 bytes stride
-	extern unsigned cosine_table; //sine_table + 2
-	extern unsigned atan_table;   //u16 per value, 1024 values
 }
-
 
 extern "C"
 {

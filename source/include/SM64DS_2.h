@@ -14,9 +14,6 @@
 #include "Input.h"
 #include "Memory.h"
 
-#define NOINLINE __attribute__((noinline))
-#define NAKED __attribute__((naked))
-
 #define OBJ_TO_ACTOR_ID_TABLE ((volatile uint16_t*)0x02004b00)
 #define ACTOR_SPAWN_TABLE     ((volatile unsigned*)0x02006590)
 
@@ -194,29 +191,7 @@ struct Platform : public Actor
 	
 };
 
-struct PathPtr
-{
-    LevelFile::Path* path;
-	unsigned unk04;
-	
-	PathPtr();
-	
-	void FromID(unsigned pathID);
-	void GetPt(Vector3& vF, unsigned index);
-	unsigned NumPts();
-};
-
-struct BezierPathIter
-{
-	PathPtr pathPtr;
-	uint16_t currSplineX3;
-	Fix12s tinyStep;
-	Fix12i step;
-	Fix12i currTime;
-	Vector3 pos;
-	
-	bool Advance();
-};
+static_assert(sizeof(MovingMeshCollider) > 0xe4);
 
 struct CameraDef
 {
@@ -324,8 +299,8 @@ struct Camera : public View				//internal name: dCamera
 
 	
 	Vector3 lookAt;
-	Vector3 pos;
-	Vector3 ownerPos;
+	Vector3 pos;     // 0x8C
+	Vector3 ownerPos; // 0x98
 	Vector3 unk0a4;
 	Vector3 savedLookAt;	//Saved to at talk
 	Vector3 savedPos;		//Saved to at talk
@@ -866,7 +841,8 @@ struct Player : public Actor
 	unsigned unk694;
 	unsigned unk698;
 	unsigned unk69c;
-	unsigned unk6a0;
+	uint16_t visibilityCounter; // the player is visible when this is even (except when the player is electrocuted the second bit is checked instead)
+	uint16_t unk6a2;
 	union
 	{
 		unsigned sleepTimer;
@@ -885,7 +861,8 @@ struct Player : public Actor
 	unsigned unk6c8;
 	uint16_t unk6cc;
 	uint16_t flags2;
-	unsigned unk6d0;
+	uint16_t unk6d0;
+	short inputAngle;
 	unsigned unk6d4;
 	uint8_t playerID; //always 0 in single player mode
 	uint8_t unk6d9;
@@ -908,7 +885,10 @@ struct Player : public Actor
 	uint16_t unk6ea;
 	unsigned unk6ec;
 	unsigned unk6f0;
-	unsigned unk6f4;
+	uint8_t unk6f4;
+	bool opacity;
+	uint8_t unk6f6;
+	uint8_t unk6f7;
 	bool isFireYoshi;
 	bool isMetalWario;
 	bool hasMetalModel;
@@ -927,10 +907,10 @@ struct Player : public Actor
 	unsigned unk70c;
 	uint16_t unk710;
 	uint8_t isInAirIsh; // 0x712
-	uint8_t unk713;
+	bool isTangible;
 	uint8_t unk714;
 	uint8_t unk715;
-	uint8_t unk716;
+	uint8_t isTangibleToMesh;
 	uint8_t unk717;
 	unsigned unk718;
 	unsigned unk71c;
@@ -944,9 +924,7 @@ struct Player : public Actor
 	uint16_t toonStateAndFlag; //8 possible states, 0x8000 is the invincible-and-can't-collect-caps flag
 	uint16_t unk73e;
 	Fix12i toonIntensity;
-	unsigned unk744;
-	unsigned unk748;
-	unsigned unk74c;
+	Vector3 unk744;
 	unsigned unk750;
 	unsigned unk754;
 	unsigned unk758;
@@ -981,7 +959,7 @@ struct Player : public Actor
 	bool Unk_020bea94();
 	unsigned GetBodyModelID(unsigned character, bool checkMetalStateInsteadOfWhetherUsingModel) const;
 	void SetAnim(unsigned animID, int flags, Fix12i animSpeed, unsigned startFrame);
-	void ShowMessage(ActorBase& speaker, unsigned msgIndex, const Vector3& lookAt, unsigned arg3, unsigned arg4);
+	bool ShowMessage(ActorBase& speaker, unsigned msgIndex, const Vector3& lookAt, unsigned arg3, unsigned arg4);
 	bool StartTalk(ActorBase& speaker, bool noButtonNeeded); //true iff the talk actually started.
 	int GetTalkState();
 	bool IsOnShell(); //if not on shell, reset shell ptr
@@ -993,9 +971,14 @@ struct Player : public Actor
 	void Heal(int health);
 	void Bounce(Fix12i bounceInitVel);
 	bool ChangeState(Player::State& state);
+
+	bool IsWarping() const
+	{
+		return reinterpret_cast<unsigned>(currState) == Player::ST_NO_CONTROL && stateState == 6;
+	}
 };
 
-static_assert(sizeof(Player) == 0x768, "sizeof(Player) is not correct!");
+static_assert(sizeof(Player) == 0x768, "sizeof(Player) is incorrect!");
 
 namespace Event
 {
@@ -1017,11 +1000,111 @@ enum class ttcClock : char
 //used for keeping track of dead objects across level parts (e.g. THI big and small mountains)
 struct ActorDeathTable
 {
-	byte deadObjs[64]; //technically 512 booleans
+	std::byte deadObjs[64]; //technically 512 booleans
 };
 
 
+struct Number : public Actor
+{
+	Model model;
+	TextureSequence textureSequence;
+	unsigned unkActorUniqueID;
+	Vector3  spawnPos;
+	Fix12i   unk148;
+	uint16_t unk14c;
+	uint8_t  numTimesBounced;
+	uint8_t  unk14f;
+};
+static_assert(sizeof(Number) == 0x150, "sizeof(Number) is incorrect!");
 
+struct PowerStar : public Enemy
+{
+	CylinderClsnWithPos cylClsn;
+	WithMeshClsn wmClsn;
+	ModelAnim modelAnim1;
+	ModelAnim modelAnim2;
+	ShadowModel shadowModel;
+	unsigned unk3fc;
+	unsigned unk400;
+	unsigned unk404;
+	unsigned unk408;
+	unsigned unk40c;
+	unsigned unk410;
+	unsigned unk414;
+	unsigned unk418;
+	unsigned unk41c;
+	unsigned unk420;
+	unsigned unk424;
+	unsigned unk428;
+	unsigned unk42c;
+	unsigned unk430;
+	unsigned unk434;
+	unsigned unk438;
+	unsigned unk43c;
+	unsigned unk440;
+	unsigned unk444;
+	unsigned unk448;
+	unsigned unk44c;
+	unsigned unk450;
+	unsigned unk454;
+	unsigned unk458;
+	unsigned unk45c;
+	Vector3 unkVec460;
+	Vector3 unkVec46c;
+	unsigned unk478;
+	unsigned unk47c;
+	unsigned unk480;
+	unsigned unk484;
+	unsigned unk488;
+	unsigned unk48c;
+	unsigned unk490;
+	uint16_t unk494;
+	short spawnFrameCounter;
+	unsigned unk498;
+	unsigned unk49c;
+	unsigned unk4a0;
+	unsigned unk4a4;
+	unsigned unk4a8;
+	unsigned unk4ac;
+	unsigned unk4b0;
+	unsigned unk4b4;
+	unsigned unk4b8;
+	unsigned unk4bc;
+	unsigned unk4c0;
+};
+static_assert(sizeof(PowerStar) == 0x4c4, "sizeof(PowerStar) is incorrect!");
+
+// actor ID 0xb4
+struct StarMarker : public Actor
+{
+	CylinderClsnWithPos cylClsn;
+	Model model;
+	ShadowModel shadowModel;
+	unsigned unk18c;
+	unsigned unk190;
+	unsigned unk194;
+	unsigned unk198;
+	unsigned unk19c;
+	unsigned unk1a0;
+	unsigned unk1a4;
+	unsigned unk1a8;
+	unsigned unk1ac;
+	unsigned unk1b0;
+	unsigned unk1b4;
+	unsigned unk1b8;
+	unsigned unk1bc;
+	unsigned unk1c0;
+	unsigned unk1c4;
+	unsigned unk1c8;
+	unsigned unk1cc;
+	unsigned unk1d0;
+	unsigned unk1d4;
+	uint8_t  unk1d8;
+	char     starID;
+	uint8_t  unk1da;
+	uint8_t  unk1db;
+};
+static_assert(sizeof(StarMarker) == 0x1dc, "sizeof(StarMarker) is incorrect!");
 
 struct ArchiveInfo
 {
@@ -1097,13 +1180,14 @@ extern "C"
 	extern Matrix4x3 VIEW_MATRIX_ASR_3;
 	extern Matrix4x3 INV_VIEW_MATRIX_ASR_3;
 	extern Vector3_16* ROT_AT_SPAWN;
+	extern Vector3* POS_AT_SPAWN;
 	extern Actor::ListNode* FIRST_ACTOR_LIST_NODE;
-	extern SaveData SAVE_DATA;
 	
 	extern bool IMMUNE_TO_DAMAGE;
 	
 	extern ttcClock TTC_CLOCK_SETTING;
 	extern char LEVEL_ID;
+	extern char NEXT_LEVEL_ID;
 	extern char STAR_ID;
 	extern uint8_t MAP_TILE_ARR_SIZE;
 	extern char NUM_LIVES;
@@ -1129,15 +1213,9 @@ extern "C"
 
 	extern uint8_t GAME_PAUSED; // 0 = not paused, 1 = paused, 2 = unpausing
 
-	struct
-	{
-		// the return value is usually 1
-		int (*func)(Camera& cam, char* params, uint16_t minFrame, uint16_t maxFrame);
-		unsigned unk04;
-	}
-	extern KS_CAMERA_FUNCTIONS[39];
-	extern unsigned KS_FRAME_COUNTER;
-	extern char* RUNNING_KUPPA_SCRIPT; // nullptr if no script is running
+	short GetAngleToCamera(unsigned playerID = 0);
+
+	bool LoadOverlay(bool isArm7, unsigned ovID);
 	
 	bool LoadArchive(int archiveID);
 	
@@ -1155,10 +1233,7 @@ extern "C"
 	void LoadSilverStarAndNumber();
 	void LinkSilverStarAndStarMarker(Actor* starMarker, Actor* silverStar);
 	
-	short ReadUnalignedShort(char* from);
-	void RunKuppaScript(char* address);
-	void EndKuppaScript();
-
+	short ReadUnalignedShort(const char* from);
 }
 
 //Obj to Model Scale: Divide integer units by 8. (So 1.000 (Q20.12) becomes 1000 / 8 = 125.)

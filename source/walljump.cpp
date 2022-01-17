@@ -1,30 +1,25 @@
 #include "include/SM64DS_2.h"
 
-extern "C" bool wallSlideOrNot()
+extern "C" bool ShouldNotWallSlide(Player& player)
 {
-	static short angle;
+	static short angle = 0;
 
-	if ((unsigned)(PLAYER_ARR[0]->currState) != Player::ST_WALL_JUMP ||
-		PLAYER_ARR[0]->ang.y != angle ||
-		(PLAYER_ARR[0]->param1 & 0xff) == 0)
+	if (player.param1 & 1 &&  // if the player is Luigi or Yoshi
+		(unsigned)player.currState == Player::ST_WALL_JUMP &&
+		AngleDiff(player.ang.y, angle) < 22.5_deg)
 	{
-		angle = PLAYER_ARR[0]->ang.y;
+		player.ang.y += 180_deg;
+
 		return true;
 	}
-	
-	PLAYER_ARR[0]->ang.y += 0x8000;
+
+	angle = player.ang.y;
+
 	return false;
 }
 
-void nsub_020c1dbc()
-{
-	asm
-	(
-		"push	{r1-r12, r14}		\n\t"
-		"bl		wallSlideOrNot		\n\t"
-		"pop 	{r1-r12, r14}		\n\t"
-		"cmp	r0, #0				\n\t"
-		"beq	0x020c1e28			\n\t"
-		"bne	0x020c1dc8			\n\t"
-	);
-}
+asm(R"(
+repl_020c1dbc:
+	mov     r0, r5
+	b 		ShouldNotWallSlide
+)");

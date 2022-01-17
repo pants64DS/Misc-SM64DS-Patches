@@ -275,12 +275,12 @@ namespace Particle
 		unsigned unk18;
 		unsigned totalSize;
 		
-		inline uint8_t* TexelArr() {return (uint8_t*)((char*)this + 0x20);}
-		inline uint16_t* PalleteColArr() {return (uint16_t*)((char*)this + palleteOffset);}
+		uint8_t* TexelArr()       { return (uint8_t*)((char*)this + 0x20); }
+		uint16_t* PalleteColArr() { return (uint16_t*)((char*)this + palleteOffset); }
 		
-		inline unsigned Format() {return flags & FORMAT;}
-		inline uint16_t Width() {return 1 << (((flags & LOG_2_WIDTH_MINUS_3) >> 4) + 3);}
-		inline uint16_t Height() {return 1 << (((flags & LOG_2_HEIGHT_MINUS_3) >> 8) + 3);}
+		unsigned Format() { return flags & FORMAT; }
+		uint16_t Width()  { return 1 << (((flags & LOG_2_WIDTH_MINUS_3) >> 4) + 3); }
+		uint16_t Height() { return 1 << (((flags & LOG_2_HEIGHT_MINUS_3) >> 8) + 3); }
 		
 		static unsigned AllocTexVram(unsigned size, bool isTexel4x4);
 		static unsigned AllocPalVram(unsigned size, bool is4Color);
@@ -327,6 +327,19 @@ namespace Particle
 	{
 		Particle* first;
 		unsigned num;
+
+		struct Iterator
+		{
+			Particle* ptr;
+
+			constexpr Particle& operator*() const { return *ptr; }
+			constexpr Particle* operator->() const { return ptr; }
+			constexpr Iterator& operator++() { ptr = ptr->node.next; return *this; }
+			constexpr bool      operator==(const Iterator&) const = default;
+		};
+
+		constexpr Iterator begin() const { return {first}; }
+		constexpr Iterator end  () const { return {nullptr}; }
 	};
 	
 	struct System;
@@ -402,23 +415,23 @@ namespace Particle
 		uint8_t numBuiltInTexs;
 		MainInfo firstSysDef;
 		
-		inline static MainInfo& nextSysDef(const MainInfo& sysDef)
+		static MainInfo& nextSysDef(const MainInfo& sysDef)
 		{
 			const char* ptr = (const char*)&sysDef;
 			return *(MainInfo*)(ptr + 0x38 +
-							    (sysDef.flags & MainInfo::HAS_SCALE_TRANS ? 0x0c : 0x00) +
-								(sysDef.flags & MainInfo::HAS_COLOR_TRANS ? 0x0c : 0x00) +
-								(sysDef.flags & MainInfo::HAS_ALPHA_TRANS ? 0x08 : 0x00) +
-								(sysDef.flags & MainInfo::HAS_INFO4_TRANS ? 0x0c : 0x00) +
-								(sysDef.flags & MainInfo::HAS_GLITTER     ? 0x14 : 0x00) +
-								
-								(sysDef.flags & MainInfo::HAS_EFFECT_DRIFT    ? 0x08 : 0x00) +
-								(sysDef.flags & MainInfo::HAS_EFFECT_BROWNIAN ? 0x08 : 0x00) +
-								(sysDef.flags & MainInfo::HAS_EFFECT_2        ? 0x10 : 0x00) +
-								(sysDef.flags & MainInfo::HAS_EFFECT_3        ? 0x04 : 0x00) +
-								(sysDef.flags & MainInfo::HAS_EFFECT_4        ? 0x08 : 0x00) +
-								(sysDef.flags & MainInfo::HAS_EFFECT_5        ? 0x10 : 0x00)
-							   );
+				(sysDef.flags & MainInfo::HAS_SCALE_TRANS ? 0x0c : 0x00) +
+				(sysDef.flags & MainInfo::HAS_COLOR_TRANS ? 0x0c : 0x00) +
+				(sysDef.flags & MainInfo::HAS_ALPHA_TRANS ? 0x08 : 0x00) +
+				(sysDef.flags & MainInfo::HAS_INFO4_TRANS ? 0x0c : 0x00) +
+				(sysDef.flags & MainInfo::HAS_GLITTER     ? 0x14 : 0x00) +
+				
+				(sysDef.flags & MainInfo::HAS_EFFECT_DRIFT    ? 0x08 : 0x00) +
+				(sysDef.flags & MainInfo::HAS_EFFECT_BROWNIAN ? 0x08 : 0x00) +
+				(sysDef.flags & MainInfo::HAS_EFFECT_2        ? 0x10 : 0x00) +
+				(sysDef.flags & MainInfo::HAS_EFFECT_3        ? 0x04 : 0x00) +
+				(sysDef.flags & MainInfo::HAS_EFFECT_4        ? 0x08 : 0x00) +
+				(sysDef.flags & MainInfo::HAS_EFFECT_5        ? 0x10 : 0x00)
+			);
 		}
 	};
 	
@@ -495,6 +508,8 @@ namespace Particle
 			unsigned* unk810;
 			unsigned unk814;
 			unsigned* unk818;
+
+			Data* FindData(unsigned uniqueID) const;
 		};
 		
 		ROMEmbeddedFile* romFile;
