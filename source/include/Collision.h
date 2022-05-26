@@ -2,24 +2,21 @@
 #define SM64DS_CLSN_INCLUDED
 
 #include "SM64DS_Common.h"
+#include <array>
 
 struct MovingCylinderClsn;
 struct WithMeshClsn;
 struct RaycastGround;
 struct RaycastLine;
-struct MeshCollider;
+struct SphereClsn;
+struct MeshColliderBase;
 struct ClsnResult;
-extern "C"
-{
-	extern MeshCollider* ACTIVE_MESH_CLSNS[0x18];
-}
+
+extern std::array<MeshColliderBase*, 0x18> ACTIVE_MESH_CLSNS;
 
 struct CLPS
 {
-	unsigned low;
-	unsigned high;
-	
-	enum _TextureID
+	enum TextureID
 	{
 		TX_NONE = 0x00,
 		TX_PATH = 0x01,
@@ -32,18 +29,18 @@ struct CLPS
 		TX_FLOWERS = 0x09,
 		TX_GRATE = 0x0c
 	};
-		
-	enum _TractionID
+
+	enum TractionID
 	{
 		TR_NORMAL = 0x0,
 		TR_UNSLIPPABLE = 0x1,
 		TR_UNSLIPPABLE_2 = 0x2,
 		TR_SLIPPERY_SLOPE = 0x3,
 		TR_SLIPPERY = 0x4,
-		TR_SLIP_NO_WALL_JUMP = 0x5,
+		TR_SLIP_NO_WALL_JUMP = 0x5
 	};
-			
-	enum _CamBehavID
+
+	enum CamBehavID
 	{
 		CA_NO_CHANGE = 0x0,
 		CA_GO_BEHIND = 0x1,
@@ -59,10 +56,10 @@ struct CLPS
 		CA_GO_BEHIND_C = 0xc,
 		CA_GO_BEHIND_D = 0xd,
 		CA_GO_BEHIND_E = 0xe,
-		CA_GO_BEHIND_F = 0xf,
+		CA_GO_BEHIND_F = 0xf
 	};
-			
-	enum _BehaviorID
+
+	enum BehaviorID
 	{
 		BH_NORMAL = 0x00,
 		BH_LAVA = 0x01,
@@ -78,41 +75,60 @@ struct CLPS
 		BH_RACE_END = 0x10,
 		BH_VANISH_LUIGI_GRATE = 0x11,
 		BH_WEIRD_TELEPORT = 0x12,
-		BH_WIND_GUST = 0x13,
+		BH_WIND_GUST = 0x13
 	};
-	
-	constexpr CLPS() : low(0xfc0), high(0xff) {}
 
-	constexpr CLPS (
-		unsigned texture, unsigned water, unsigned viewID, unsigned traction, unsigned camBehav,
-		unsigned behav, unsigned camTrans, unsigned toxic, unsigned unk, unsigned windID
-	):
-		low(texture | water << 5 | viewID << 6 | traction << 12 | camBehav << 15 |
-			behav << 19 | camTrans << 24 | toxic << 25 | unk << 26),
-		high(windID)
-	{}
-	
-	constexpr unsigned TextureID()       const { return low & 0x1f; }
-	constexpr bool     IsWater()         const { return low & 0x20; }
-	constexpr unsigned ViewID()          const { return low >> 6 & 0x3f; }
-	constexpr unsigned TractionID()      const { return low >> 12 & 0x07; }
-	constexpr unsigned CamBehavID()      const { return low >> 15 & 0x0f; }
-	constexpr unsigned BehaviorID()      const { return low >> 19 & 0x1f; }
-	constexpr bool     CanCamGoThrough() const { return low & 0x01000000; }
-	constexpr bool     IsToxic()         const { return low & 0x02000000; }
-	constexpr bool     IsCameraWall()    const { return low & 0x04000000; }
-	constexpr unsigned Padding()         const { return low >> 27; }
-	constexpr unsigned WindID()          const { return high & 0xff; }
-
-	constexpr bool operator==(const CLPS&) const = default;
+	unsigned textureID   :  5 = 0;
+	bool     isWater     :  1 = false;
+	unsigned viewID      :  6 = 0x3f;
+	unsigned tractionID  :  3 = 0;
+	unsigned camBehavID  :  4 = 0;
+	unsigned behaviorID  :  5 = 0;
+	bool     camGoesThru :  1 = false;
+	bool     toxic       :  1 = false;
+	bool     isCamWall   :  1 = false;
+	unsigned padding     :  5 = 0;
+	unsigned windID      :  8 = 0xff;
+	unsigned padding2    : 24 = 0;
 };
-	
-struct CLPS_Block
+
+struct CLPS_Header
 {
-	char magic[4]; // = {'C', 'L', 'P', 'S'};
-	uint16_t unk04;
-	uint16_t num; // = Size;
-	CLPS clpses[];
+	std::array<char, 4> magic = {'C', 'L', 'P', 'S'};
+	uint16_t unk04 = 8;
+	uint16_t size; // number of CLPSes
+
+	constexpr CLPS_Header(uint16_t size) : size(size) {}
+
+	CLPS_Header(const CLPS_Header&) = delete;
+	CLPS_Header(CLPS_Header&&) = delete;
+
+	CLPS_Header& operator=(const CLPS_Header&) = delete;
+	CLPS_Header& operator=(CLPS_Header&&) = delete;
+};
+
+struct CLPS_Block : CLPS_Header
+{
+	CLPS clpses[]; // flexible arrays CAN be static-initialized
+
+	constexpr       CLPS* begin()       { return &clpses[0]; }
+	constexpr const CLPS* begin() const { return &clpses[0]; }
+	constexpr       CLPS* end  ()       { return &clpses[size]; }
+	constexpr const CLPS* end  () const { return &clpses[size]; }
+
+	constexpr       CLPS& operator[](std::size_t i)       { return clpses[i]; }
+	constexpr const CLPS& operator[](std::size_t i) const { return clpses[i]; }
+};
+
+template<CLPS... clpses>
+struct StaticCLPS_Block
+{
+	template<auto...>
+	static constinit inline CLPS_Block instance
+	{
+		sizeof...(clpses),
+		{clpses...}
+	};
 };
 
 namespace LevelFile
@@ -120,13 +136,32 @@ namespace LevelFile
 	extern "C" CLPS_Block* CLPS_BLOCK_PTR;
 }
 
-template<int Size> struct FixedSizeCLPS_Block // flexible arrays cannot be static-initialized.
+struct KCL_File
 {
-	char magic[4]; // = {'C', 'L', 'P', 'S'};
-	uint16_t unk04;
-	uint16_t num; // = Size;
-	CLPS clpses[Size];
+	struct Triangle
+	{
+		unsigned length;
+		uint16_t origin;
+		uint16_t normal;
+		uint16_t direction1;
+		uint16_t direction2;
+		uint16_t direction3;
+		uint16_t collisionType;
+	};
+
+	Vector3* vertices;
+	Vector3_16f* vectors;
+	Triangle* triangles;
+	void* octree;
+	unsigned unk10;
+	Vector3 octreeOrigin;
+	Vector3 octreeNegativeDimensions;
+	unsigned octreeBaseWidthLog2;
+	unsigned unk30;
+	unsigned unk34;
 };
+
+static_assert(sizeof(KCL_File) == 0x38);
 
 struct SurfaceInfo
 {
@@ -134,19 +169,87 @@ struct SurfaceInfo
 	Vector3 normal;
 };
 
-struct MeshCollider
+struct MeshColliderBase // vtable at 0x02099388
 {
-	//vtable
 	Actor* actor;
 	unsigned actorUniqueID;
 	Fix12i range;
 	Fix12i rangeOffsetY;
 	unsigned clsnID;
-	//clsnActor is the mesh collider's actor for some reason
-	//beforeClsnCallback is called if there was a collision the previous frame.
-	void(*beforeClsnCallback)(MeshCollider& clsn, Actor* clsnActor, ClsnResult& wmClsnResult, Vector3& posToUpdate, Vector3_16* motionAngToUpdate, Vector3_16* angToUpdate);
-	void(*afterClsnCallback)(MeshCollider& clsn, Actor* clsnActor, Actor* otherActor);
-	char* clsnFile;
+
+	void (*beforeClsnCallback) // called if there was a collision the previous frame.
+	(
+		MeshColliderBase& clsn,
+		Actor*            clsnActor, // the mesh collider's actor for some reason
+		ClsnResult&       wmClsnResult,
+		Vector3&          posToUpdate,
+		Vector3_16*       motionAngToUpdate,
+		Vector3_16*       angToUpdate
+	);
+
+	void (*afterClsnCallback)
+	(
+		MeshColliderBase& clsn,
+		Actor*            clsnActor,
+		Actor*            otherActor
+	);
+
+	MeshColliderBase();
+	virtual ~MeshColliderBase();
+	virtual void Virtual08(); // all known implementations are bx lr // 02039620
+	virtual void GetSurfaceInfo(short triangleID, SurfaceInfo& res) = 0;
+	virtual void GetNormal(short triangleID, Vector3& res) = 0;
+	virtual void GetTriangleOrigin(short triangleID, Vector3& res) = 0;
+	virtual bool DetectClsn(RaycastGround& ray);
+	virtual bool DetectClsn(RaycastLine& ray);
+	virtual bool DetectClsn(SphereClsn& sphere);
+
+	virtual void BeforeClsn (
+		ClsnResult& wmClsnResult, // Yes, the first two parameters are in reversed order in the callback
+		Actor*      clsnActor,
+		Vector3&    posToUpdate,
+		Vector3_16* motionAngToUpdate,
+		Vector3_16* angToUpdate
+	);
+
+	// returns true if vector was transformed
+	virtual bool TransformPos(const Vector3& pos, Vector3& res);
+	virtual uint16_t GetAngularVelY();
+	virtual void GetVelocity(Vector3& res);
+
+	[[gnu::always_inline]]
+	auto GetNormal(const short& triangleID)
+	{
+		return Vector3::Proxy([&]<bool resMayAlias>[[gnu::always_inline]](Vector3& res)
+		{
+			this->GetNormal(triangleID, res);
+		});
+	}
+
+	[[gnu::always_inline]]
+	auto GetTriangleOrigin(const short& triangleID)
+	{
+		return Vector3::Proxy([&]<bool resMayAlias>[[gnu::always_inline]](Vector3& res)
+		{
+			this->GetTriangleOrigin(triangleID, res);
+		});
+	}
+
+	[[gnu::always_inline]]
+	auto TransformPos(const Vector3& pos)
+	{
+		return Vector3::Proxy([&]<bool resMayAlias>[[gnu::always_inline]](Vector3& res)
+		{
+			this->TransformPos(pos, res);
+		});
+	}
+};
+
+static_assert(sizeof(MeshColliderBase) == 0x20);
+
+struct MeshCollider : public MeshColliderBase // vtable at 0x020993dc
+{
+	KCL_File* clsnFile;
 	CLPS_Block* clpsBlock;
 	Vector3 unkVec28;
 	Vector3 unkVec34;
@@ -156,41 +259,39 @@ struct MeshCollider
 	unsigned unk4c;
 	
 	MeshCollider();
-	virtual ~MeshCollider();
-	virtual void Virtual08(); // both known implementations are bx lr
-	virtual void GetSurfaceInfo(short triangleID, SurfaceInfo& res);
-	virtual void GetNormal(short triangleID, Vector3& res);
+	virtual ~MeshCollider() override;
+	virtual void Virtual08() override;
 
-	[[gnu::always_inline]]
-	auto GetNormal(const short& triangleID)
-	{
-		return Vector3::Proxy([this, &triangleID]<bool resMayAlias> [[gnu::always_inline]] (Vector3& res)
-		{
-			this->GetNormal(triangleID, res);
-		});
-	}
+	virtual void GetSurfaceInfo(short triangleID, SurfaceInfo& res) override;
+	virtual void GetNormal(short triangleID, Vector3& res) override;
+	virtual void GetTriangleOrigin(short triangleID, Vector3& res) override;
+
+	virtual bool DetectClsn(RaycastGround& ray) override;
+	virtual bool DetectClsn(RaycastLine&   ray) override;
+	virtual bool DetectClsn(SphereClsn& sphere) override;
 	
 	bool Disable();
 	bool Enable(Actor* actor = nullptr);
 	bool IsEnabled();
 
 	void SetFile(char* clsnFile, CLPS_Block& clps);
+
+	using MeshColliderBase::GetNormal, MeshColliderBase::GetTriangleOrigin, MeshColliderBase::TransformPos;
 };
 
-struct MovingMeshCollider : public MeshCollider
+static_assert(sizeof(MeshCollider) == 0x50);
+
+struct MovingMeshCollider : public MeshCollider // vtable at 0x02099434
 {
 	unsigned unk50;
 	Matrix4x3 newTransform;
 	Matrix4x3 invMat4x3_084;
 	Matrix4x3 scMat4x3_0b4;
 	Matrix4x3 invMat4x3_0e4;
-	unsigned unk114;
-	unsigned unk118;
-	unsigned unk11c;
-	unsigned unk120;
-	unsigned unk124;
-	unsigned unk128;
-	unsigned unk12c;
+	short angleY;
+	short angularVelY;
+	Vector3 pos;
+	Vector3 velocity;
 	unsigned unk130;
 	Matrix4x3 ledgeMat;
 	unsigned unk164;
@@ -198,22 +299,34 @@ struct MovingMeshCollider : public MeshCollider
 	Matrix4x3 sc2InvMat4x3_198;
 	
 	MovingMeshCollider();
-	virtual ~MovingMeshCollider();
-	virtual void Virtual08();
-	virtual void GetSurfaceInfo(short triangleID, SurfaceInfo& res);
-	virtual void GetNormal(short triangleID, Vector3& res);
-	using MeshCollider::GetNormal;
+	virtual ~MovingMeshCollider() override;
+	virtual void Virtual08() override;
+
+	virtual void GetNormal(short triangleID, Vector3& res) override;
+	virtual void GetTriangleOrigin(short triangleID, Vector3& res) override;
+
+	virtual bool DetectClsn(RaycastGround& ray) override;
+	virtual bool DetectClsn(RaycastLine&   ray) override;
+	virtual bool DetectClsn(SphereClsn& sphere) override;
+
+	virtual bool TransformPos(const Vector3& pos, Vector3& res) override;
+	virtual uint16_t GetAngularVelY() override;
+	virtual void GetVelocity(Vector3& res) override;
 	
 	static char* LoadFile(SharedFilePtr& filePtr);
 	void SetFile(char* clsnFile, const Matrix4x3& mat, Fix12i scale, short angleY, CLPS_Block& clps);
 	void Transform(const Matrix4x3& mat, short rotY);
+
+	using MeshColliderBase::GetNormal, MeshColliderBase::GetTriangleOrigin, MeshColliderBase::TransformPos;
 };
+
+static_assert(sizeof(MovingMeshCollider) == 0x1c8);
 
 struct CylinderClsn
 {
 	enum Flags1 : unsigned
 	{
-		F1_DISABLED = 1 << 0, //at least against the player.
+		F1_DISABLED = 1 << 0, // at least against the player.
 		F1_PLAYER_CAN_GO_THROUGH = 1 << 1,
 		
 		F1_BEING_SPIT = 1 << 17
@@ -332,6 +445,8 @@ struct BgCh //That's the internal name, and I didn't know what else to call it s
 	void SetFlag_2();
 	void ClearFlag_1();
 };
+
+static_assert(sizeof(BgCh) == 0x38);
 
 struct RaycastGround : public BgCh
 {

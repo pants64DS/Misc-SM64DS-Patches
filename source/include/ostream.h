@@ -12,18 +12,18 @@ class ostream
 
 public:
 
-	[[gnu::naked, gnu::target("thumb")]]
+	[[gnu::naked]]
 	static void flush(...)
 	{
 		asm volatile (R"(
-			mov   r12,r12
+			mov   r12, r12
 			b     end
 			.hword 0x6464
 			.hword 0x0000
 		.weak _ZN7ostream6bufferE
 		_ZN7ostream6bufferE:
 			.fill 120
-			.hword 0
+			.word 0
 		end:
 			bx lr
 		)");

@@ -73,6 +73,7 @@ struct ActorBase //internal name: fBase
 
 	void Destroy();
 
+	ActorBase();
 	ActorBase(const ActorBase&) = delete;
 	ActorBase(ActorBase&&) = delete;
 	ActorBase& operator=(const ActorBase&) = delete;
@@ -233,34 +234,87 @@ struct Actor : public ActorBase				//internal name: dActor
 
 	void UpdatePos(CylinderClsn* clsn); //Applies motion direction, vertical acceleration, and terminal velocity.
 	void UpdatePosWithOnlySpeed(CylinderClsn* clsn);//IMPORTANT!: When spawning a Super Mushroom, make sure to already have the model loaded before the player goes super!
-	//You cannot afford to spawn a Super Mushroom if there are 0 uses of the model's SharedFilePtr and the player already went super.
-	//If you do, particle color glitches will happen!
+	// You cannot afford to spawn a Super Mushroom if there are 0 uses of the model's SharedFilePtr and the player already went super.
+	// If you do, particle color glitches will happen!
 
 	Actor* SpawnNumber(const Vector3& pos, unsigned number, bool isRed, unsigned arg3, unsigned arg4);
-	static Actor* Spawn(unsigned actorID, unsigned param1, const Vector3& pos, const Vector3_16* rot, int areaID, int deathTableID);
-	static Actor* Next(const Actor* actor); //next in the linked list. Returns the 1st object if given a nullptr. Returns a nullptr if given the last actor
+	static Actor* Spawn(unsigned actorID, unsigned param1, const Vector3& pos, const Vector3_16* rot = nullptr, int areaID = 0, int deathTableID = -1);
+	static Actor* Next(const Actor* actor); // next in the linked list. Returns the 1st object if given a nullptr. Returns a nullptr if given the last actor
 	static Actor* FindWithID(unsigned id);
-	static Actor* FindWithActorID(unsigned actorID, Actor* searchStart); //searchStart is not included.
+	static Actor* FindWithActorID(unsigned actorID, Actor* searchStart = nullptr); // searchStart is not included.
 
-	static Actor* First() { return Next(nullptr); }
-	static Actor* FirstWithActorID(unsigned actorID) { return FindWithActorID(actorID, nullptr); }
+	[[deprecated("Use Actor::Iterate instead")]]
+	static void ForEach(auto&& f)
+	{
+		Actor* actor = nullptr;
+		while ((actor = Next(actor)) != nullptr)
+			f(*actor);
+	}
 
-	template<typename F>
-    static void ForEach(F&& f)
-    {
-        for (Actor* actor = First(); actor != nullptr; actor = Next(actor))
-            f(*actor);
-    }
+	[[deprecated("Use Actor::Iterate instead")]]
+	static void ForEach(uint16_t actorID, auto&& f)
+	{
+		Actor* actor = nullptr;
+		while ((actor = FindWithActorID(actorID, actor)) != nullptr)
+			f(*actor);
+	}
 
-    template<typename F>
-    static void ForEach(uint16_t actorID, F&& f)
-    {
-        for (Actor* actor = FirstWithActorID(actorID); actor != nullptr; actor = FindWithActorID(actorID, actor))
-            f(*actor);
-    }
+	template<std::derived_from<Actor> T, uint16_t actorID>
+	struct Alias
+	{
+		static constexpr uint16_t staticActorID = actorID;
+	};
+
+	template<class T>
+	struct ResolveAlias { using Type = T; };
+
+	template<std::derived_from<Actor> T, uint16_t actorID>
+	struct ResolveAlias<Alias<T, actorID>> { using Type = T; };
+
+	template<class T>
+	static auto* Spawn(unsigned param1, const Vector3& pos, auto... args)
+	{
+		return static_cast<ResolveAlias<T>::Type*>(Spawn(T::staticActorID, param1, pos, args...));
+	}
+
+	template<class T = Actor>
+	static consteval auto Iterate()
+	{
+		struct Sentinel {};
+
+		using A = ResolveAlias<T>::Type;
+
+		struct Iterator
+		{
+			A* ptr;
+
+			consteval void operator++() {} // no-op
+			constexpr A& operator*() const { return *ptr; }
+
+			bool operator==(Sentinel) // actually increments the iterator
+			{
+				if constexpr (std::same_as<T, Actor>)
+					ptr = Next(ptr);
+				else
+					ptr = static_cast<A*>(FindWithActorID(T::staticActorID, ptr));
+
+				return ptr == nullptr;
+			}
+		};
+
+		// Warning: For performance reasons, the iterators of this range don't
+		// behave normally and should only be used for range-based for loops
+		struct Range
+		{
+			constexpr Iterator begin() const { return {}; }
+			constexpr Sentinel end  () const { return {}; }
+		};
+
+		return Range {};
+	}
 };
 
-static_assert(sizeof(Actor) == 0xd4, "sizeof(Actor) is incorrect!");
+static_assert(sizeof(Actor) == 0xd4);
 
 struct BaseSpawnInfo
 {
