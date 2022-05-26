@@ -202,7 +202,7 @@ namespace Particle
 	{
 		static void Func(EffectData& data, char*, Vector3& velAsr4);
 		Vector3_16f sysVelAsr4;
-		constexpr Drift(const Vector3_16f& velAsr4) : sysVelAsr4(velAsr4) {}
+		uint16_t unk06;
 	};
 	struct Brownian : public EffectData
 	{
@@ -213,18 +213,26 @@ namespace Particle
 	struct Effect2 : public EffectData
 	{
 		static void Func(EffectData& data, char*, Vector3& velAsr4);
+
+		uint8_t unk00[0x10];
 	};
 	struct Effect3 : public EffectData
 	{
 		static void Func(EffectData& data, char*, Vector3& velAsr4);
+
+		uint8_t unk00[4];
 	};
 	struct Effect4 : public EffectData
 	{
 		static void Func(EffectData& data, char*, Vector3& velAsr4);
+
+		uint8_t unk00[8];
 	};
 	struct Effect5 : public EffectData
 	{
 		static void Func(EffectData& data, char*, Vector3& velAsr4);
+
+		uint8_t unk00[0x10];
 	};
 	
 	struct Effect
@@ -233,13 +241,18 @@ namespace Particle
 		EffectData* data;
 	};
 
+	struct SysInfo4
+	{
+		uint8_t unk00[0xc];
+	};
+
 	struct SysDef
 	{
 		MainInfo* info;
 		ScaleTransition* scaleTrans;
 		ColorTransition* colorTrans;
 		AlphaTransition* alphaTrans;
-		void* info4; //SysInfo4* info4;
+		SysInfo4* info4;
 		Glitter* glitter;
 		Effect* effects;
 		uint16_t numEffects;
@@ -413,33 +426,35 @@ namespace Particle
 		uint16_t numSysDefs;
 		uint8_t numTexs;
 		uint8_t numBuiltInTexs;
+		unsigned unk0c;
+		unsigned sysDefSectionSize;
+		unsigned textureSectionSize;
+		unsigned textureSectionOffset;
+		unsigned unk1c;
 		MainInfo firstSysDef;
 		
-		static MainInfo& nextSysDef(const MainInfo& sysDef)
+		static MainInfo& NextSysDef(MainInfo& sysDef)
 		{
-			const char* ptr = (const char*)&sysDef;
-			return *(MainInfo*)(ptr + 0x38 +
-				(sysDef.flags & MainInfo::HAS_SCALE_TRANS ? 0x0c : 0x00) +
-				(sysDef.flags & MainInfo::HAS_COLOR_TRANS ? 0x0c : 0x00) +
-				(sysDef.flags & MainInfo::HAS_ALPHA_TRANS ? 0x08 : 0x00) +
-				(sysDef.flags & MainInfo::HAS_INFO4_TRANS ? 0x0c : 0x00) +
-				(sysDef.flags & MainInfo::HAS_GLITTER     ? 0x14 : 0x00) +
-				
-				(sysDef.flags & MainInfo::HAS_EFFECT_DRIFT    ? 0x08 : 0x00) +
-				(sysDef.flags & MainInfo::HAS_EFFECT_BROWNIAN ? 0x08 : 0x00) +
-				(sysDef.flags & MainInfo::HAS_EFFECT_2        ? 0x10 : 0x00) +
-				(sysDef.flags & MainInfo::HAS_EFFECT_3        ? 0x04 : 0x00) +
-				(sysDef.flags & MainInfo::HAS_EFFECT_4        ? 0x08 : 0x00) +
-				(sysDef.flags & MainInfo::HAS_EFFECT_5        ? 0x10 : 0x00)
-			);
+			char* ptr = reinterpret_cast<char*>(&sysDef + 1);
+			
+			if (sysDef.flags & MainInfo::HAS_SCALE_TRANS)     ptr += sizeof(ScaleTransition);
+			if (sysDef.flags & MainInfo::HAS_COLOR_TRANS)     ptr += sizeof(ColorTransition);
+			if (sysDef.flags & MainInfo::HAS_ALPHA_TRANS)     ptr += sizeof(AlphaTransition);
+			if (sysDef.flags & MainInfo::HAS_INFO4_TRANS)     ptr += sizeof(SysInfo4);
+			if (sysDef.flags & MainInfo::HAS_GLITTER)         ptr += sizeof(Glitter);
+			if (sysDef.flags & MainInfo::HAS_EFFECT_DRIFT)    ptr += sizeof(Drift);
+			if (sysDef.flags & MainInfo::HAS_EFFECT_BROWNIAN) ptr += sizeof(Brownian);
+			if (sysDef.flags & MainInfo::HAS_EFFECT_2)        ptr += sizeof(Effect2);
+			if (sysDef.flags & MainInfo::HAS_EFFECT_3)        ptr += sizeof(Effect3);
+			if (sysDef.flags & MainInfo::HAS_EFFECT_4)        ptr += sizeof(Effect4);
+			if (sysDef.flags & MainInfo::HAS_EFFECT_5)        ptr += sizeof(Effect5);
+
+			return *reinterpret_cast<MainInfo*>(ptr);
 		}
 	};
 	
-	class TexROMEmbeddedFile
-	{
-		
-	};
-	
+	static_assert(sizeof(MainInfo) == 0x38);
+
 	struct Manager
 	{
 		using AdvancePtrFunc = void*(*)(unsigned amount); //returns the pointer before the advancing, advances 0x0209ee78
@@ -521,7 +536,6 @@ namespace Particle
 extern "C"
 {
 	extern Particle::ROMEmbeddedFile PARTICLE_ROM_EMBEDDED_FILE;
-	extern Particle::TexROMEmbeddedFile TEX_ROM_EMBEDDED_FILE;
 	extern Particle::SysTracker* PARTICLE_SYS_TRACKER;
 	extern unsigned PARTICLE_RNG_STATE; //x => x * 0x5eedf715 + 0x1b0cb173
 }

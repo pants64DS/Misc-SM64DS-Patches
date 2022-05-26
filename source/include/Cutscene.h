@@ -172,21 +172,36 @@ public:
 	}
 
 	// Set camera target position (coordinates in fxu)
+	consteval auto SetCamTarget(Vector3_16 target) const
+	{
+		return CamInstruction<0>(ToByteArray(target));
+	}
+
 	consteval auto SetCamTarget(short x, short y, short z) const
 	{
-		return CamInstruction<0>(ToByteArray(x, y, z));
+		return SetCamTarget(Vector3_16{x, y, z});
 	}
 
 	// Set camera position (coordinates in fxu)
+	consteval auto SetCamPos(Vector3_16 pos) const
+	{
+		return CamInstruction<1>(ToByteArray(pos));
+	}
+
 	consteval auto SetCamPos(short x, short y, short z) const
 	{
-		return CamInstruction<1>(ToByteArray(x, y, z));
+		return SetCamPos(Vector3_16{x, y, z});
 	}
 
 	// Set camera target position and position (coordinates in fxu)
+	consteval auto SetCamTargetAndPos(Vector3_16 target, Vector3_16 pos) const
+	{
+		return CamInstruction<2>(ToByteArray(target, pos));
+	}
+
 	consteval auto SetCamTargetAndPos(short tx, short ty, short tz, short px, short py, short pz) const
 	{
-		return CamInstruction<2>(ToByteArray(tx, ty, tz, px, py, pz));
+		return SetCamTargetAndPos(Vector3_16{tx, ty, tz}, Vector3_16{px, py, pz});
 	}
 
 	// Set camera FOV modifier (not sure if it's exactly the FOV, might be FOV/2)
@@ -238,20 +253,84 @@ public:
 
 	// Adjust camera target position via exponential decay
 	consteval auto AdjustCamTargetDec(
+		Vector3_16 dest,    // the destination vector of the target position
+		Vector3_16 approach // approach factors
+	) const
+	{
+		return CamInstruction<15>(ToByteArray(dest, approach));
+	}
+
+	consteval auto AdjustCamTargetDec(
+		Vector3_16 dest,             // the destination vector of the target position
+		short ax, short ay, short az // approach factors
+	) const
+	{
+		return AdjustCamTargetDec(dest, Vector3_16{ax, ay, az});
+	}
+
+	consteval auto AdjustCamTargetDec(
+		Vector3_16 dest, // the destination vector of the target position
+		short approach   // single approach factor
+	) const
+	{
+		return AdjustCamTargetDec(dest, approach, approach, approach);
+	}
+
+	consteval auto AdjustCamTargetDec(
 		short dx, short dy, short dz, // the destination coordinates of the target position
 		short ax, short ay, short az  // approach factors
 	) const
 	{
-		return CamInstruction<15>(ToByteArray(dx, dy, dz, ax, ay, az));
+		return AdjustCamTargetDec(Vector3_16{dx, dy, dz}, Vector3_16{ax, ay, az});
+	}
+
+	consteval auto AdjustCamTargetDec(
+		short dx, short dy, short dz, // the destination coordinates of the target position
+		short approach                // single approach factor
+	) const
+	{
+		return AdjustCamTargetDec(Vector3_16{dx, dy, dz}, approach);
 	}
 
 	// Adjust camera position via exponential decay
+	consteval auto AdjustCamPosDec(
+		Vector3_16 dest,    // the destination vector of the target position
+		Vector3_16 approach // approach factors
+	) const
+	{
+		return CamInstruction<16>(ToByteArray(dest, approach));
+	}
+
+	consteval auto AdjustCamPosDec(
+		Vector3_16 dest,             // the destination vector of the target position
+		short ax, short ay, short az // approach factors
+	) const
+	{
+		return AdjustCamPosDec(dest, Vector3_16{ax, ay, az});
+	}
+
+	consteval auto AdjustCamPosDec(
+		Vector3_16 dest, // the destination vector of the target position
+		short approach   // single approach factor
+	) const
+	{
+		return AdjustCamPosDec(dest, approach, approach, approach);
+	}
+
 	consteval auto AdjustCamPosDec(
 		short dx, short dy, short dz, // the destination coordinates of the position
 		short ax, short ay, short az  // approach factors
 	) const
 	{
-		return CamInstruction<16>(ToByteArray(dx, dy, dz, ax, ay, az));
+		return AdjustCamPosDec(Vector3_16{dx, dy, dz}, Vector3_16{ax, ay, az});
+	}
+
+	consteval auto AdjustCamPosDec(
+		short dx, short dy, short dz, // the destination coordinates of the position
+		short approach                // single approach factor
+	) const
+	{
+		return AdjustCamPosDec(Vector3_16{dx, dy, dz}, approach);
 	}
 
 	// Set stored angle toward pause view position and the stored shorts to 0
@@ -261,15 +340,25 @@ public:
 	}
 
 	// Adjust camera target position to offset from owner via exponential decay
+	consteval auto SetCamTargetRelativeDec(Vector3_16 offset, uint8_t approachFactorLsl8) const
+	{
+		return CamInstruction<18>(ToByteArray(offset, approachFactorLsl8));
+	}
+
 	consteval auto SetCamTargetRelativeDec(short x, short y, short z, uint8_t approachFactorLsl8) const
 	{
-		return CamInstruction<18>(ToByteArray(x, y, z, approachFactorLsl8));
+		return SetCamTargetRelativeDec(Vector3_16{x, y, z}, approachFactorLsl8);
 	}
 
 	// Adjust camera target position to offset from owner rotated by owner's facing angle via exponential decay
+	consteval auto AdjustCamByOwnerAngleDec(Vector3_16 offset, uint8_t approachFactorLsl8) const
+	{
+		return CamInstruction<19>(ToByteArray(offset, approachFactorLsl8));
+	}
+
 	consteval auto AdjustCamByOwnerAngleDec(short x, short y, short z, uint8_t approachFactorLsl8) const
 	{
-		return CamInstruction<19>(ToByteArray(x, y, z, approachFactorLsl8));
+		return AdjustCamByOwnerAngleDec(Vector3_16{x, y, z}, approachFactorLsl8);
 	}
 
 	// Adjust camera position and angles relative to owner position via exponential decay
@@ -337,9 +426,14 @@ public:
 	}
 
 	// Set camera target position and position to rotated offset from owner (in fxu)
+	consteval auto SetCamTargetAndPosRotatedFromOwner(Vector3_16 target, Vector3_16 pos) const
+	{
+		return CamInstruction<27>(ToByteArray(target, pos));
+	}
+
 	consteval auto SetCamTargetAndPosRotatedFromOwner(short tx, short ty, short tz, short px, short py, short pz) const
 	{
-		return CamInstruction<27>(ToByteArray(tx, ty, tz, px, py, pz));
+		return SetCamTargetAndPosRotatedFromOwner(Vector3_16{tx, ty, tz}, Vector3_16{px, py, pz});
 	}
 
 	// Wifi Related
@@ -409,23 +503,41 @@ public:
 
 	// Set position and Y-angle (both model and motion angle)
 	template<CharacterID character>
+	consteval auto SetPlayerPosAndAngleY(Vector3_16 pos, short yAngle) const
+	{
+		return PlayerInstruction<character, 0>(ToByteArray(pos, yAngle));
+	}
+
+	template<CharacterID character>
 	consteval auto SetPlayerPosAndAngleY(short xPos, short yPos, short zPos, short yAngle) const
 	{
-		return PlayerInstruction<character, 0>(ToByteArray(xPos, yPos, zPos, yAngle));
+		return SetPlayerPosAndAngleY<character>(Vector3_16{xPos, yPos, zPos}, yAngle);
 	}
 
 	// Send input to move the player to a target position (full magnitude: 0x1000)
 	template<CharacterID character>
+	consteval auto SendPlayerInput(Vector3_16 pos, short inputMagnitude) const
+	{
+		return PlayerInstruction<character, 1>(ToByteArray(pos, inputMagnitude));
+	}
+
+	template<CharacterID character>
 	consteval auto SendPlayerInput(short xPos, short yPos, short zPos, short inputMagnitude) const
 	{
-		return PlayerInstruction<character, 1>(ToByteArray(xPos, yPos, zPos, inputMagnitude));
+		return SendPlayerInput<character>(Vector3_16{xPos, yPos, zPos}, inputMagnitude);
 	}
 
 	// Send input to move the player to a target position (full magnitude: 1._fs)
 	template<CharacterID character>
+	consteval auto SendPlayerInput(Vector3_16 pos, Fix12s inputMagnitude = 1._fs) const
+	{
+		return PlayerInstruction<character, 1>(ToByteArray(pos, inputMagnitude));
+	}
+
+	template<CharacterID character>
 	consteval auto SendPlayerInput(short xPos, short yPos, short zPos, Fix12s inputMagnitude = 1._fs) const
 	{
-		return PlayerInstruction<character, 1>(ToByteArray(xPos, yPos, zPos, inputMagnitude));
+		return SendPlayerInput<character>(Vector3_16{xPos, yPos, zPos}, inputMagnitude);
 	}
 
 	// Orr player flags with 0x24000000

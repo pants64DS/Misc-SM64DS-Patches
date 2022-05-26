@@ -618,6 +618,8 @@ struct LaunchStar;
 //allocating constructor: 020e6c0c, vtable: 0210a83c
 struct Player : public Actor
 {
+	static constexpr uint16_t staticActorID = 0xbf;
+
 	enum Characters
 	{
 		CH_MARIO,
@@ -626,33 +628,33 @@ struct Player : public Actor
 		CH_YOSHI
 	};
 	
-    struct State
-    {
-        bool(Player::* init)();
+	struct State
+	{
+		bool(Player::* init)();
 		bool(Player::* main)();
 		bool(Player::* cleanup)();
-    };
-    enum States
-    {
+	};
+	enum States
+	{
 		ST_LEDGE_GRAB         = 0x02110004,
 		ST_CEILING_GRATE      = 0x0211001c,
 		ST_YOSHI_POWER        = 0x02110034, //tongue, spitting, throwing egg, breathing fire
-        ST_SWALLOW            = 0x0211004c,
+		ST_SWALLOW            = 0x0211004c,
 		
 		
 		ST_HURT               = 0x02110094,
-        ST_HURT_WATER         = 0x021100ac,
+		ST_HURT_WATER         = 0x021100ac,
 		ST_ELECTROCUTE        = 0x021100c4,
 		ST_BURN_FIRE          = 0x021100dc,
 		ST_BURN_LAVA          = 0x021100f4,
 		ST_DEAD_HIT           = 0x0211010c,
 		ST_DEAD_PIT           = 0x02110124,
-        ST_WALK               = 0x0211013c,
-        ST_WAIT               = 0x02110154,
+		ST_WALK               = 0x0211013c,
+		ST_WAIT               = 0x02110154,
 		ST_GRABBED            = 0x0211016c,
 		ST_TURN_AROUND        = 0x02110184,
 		ST_JUMP               = 0x0211019c,
-        ST_FALL               = 0x021101b4,
+		ST_FALL               = 0x021101b4,
 		ST_THROWN             = 0x021101cc,
 		ST_SIDE_FLIP          = 0x021101e4,
 		ST_SLIDE_KICK_RECOVER = 0x021101fc,
@@ -678,7 +680,7 @@ struct Player : public Actor
 		ST_WALL_JUMP          = 0x021103dc,
 		ST_SLOPE_JUMP         = 0x021103f4,
 		ST_STUCK_IN_GROUND    = 0x0211040c,
-        ST_LAND               = 0x02110424,
+		ST_LAND               = 0x02110424,
 		ST_ON_WALL            = 0x0211043c,
 		ST_SPIN               = 0x02110454,
 		ST_TALK		          = 0x0211046c,
@@ -701,9 +703,9 @@ struct Player : public Actor
 		
 		
 		ST_SLIDE_KICK         = 0x02110634,
+		ST_FIRST_PERSON       = 0x0211064c,
 		
-		
-        ST_SWIM               = 0x0211067c,
+		ST_SWIM               = 0x0211067c,
 		ST_WATER_JUMP         = 0x02110694,
 		ST_METAL_WATER_GROUND = 0x021106ac,
 		ST_METAL_WATER_WATER  = 0x021106c4,
@@ -716,7 +718,7 @@ struct Player : public Actor
 		
 		
 		ST_LAUNCH_STAR        = 0x0211079c
-    };
+	};
 	
 	enum TalkStates
 	{
@@ -1006,6 +1008,8 @@ struct ActorDeathTable
 
 struct Number : public Actor
 {
+	static constexpr uint16_t staticActorID = 0x14a;
+
 	Model model;
 	TextureSequence textureSequence;
 	unsigned unkActorUniqueID;
@@ -1019,6 +1023,8 @@ static_assert(sizeof(Number) == 0x150, "sizeof(Number) is incorrect!");
 
 struct PowerStar : public Enemy
 {
+	static constexpr uint16_t staticActorID = 0xb2;
+
 	CylinderClsnWithPos cylClsn;
 	WithMeshClsn wmClsn;
 	ModelAnim modelAnim1;
@@ -1074,9 +1080,10 @@ struct PowerStar : public Enemy
 };
 static_assert(sizeof(PowerStar) == 0x4c4, "sizeof(PowerStar) is incorrect!");
 
-// actor ID 0xb4
 struct StarMarker : public Actor
 {
+	static constexpr uint16_t staticActorID = 0xb4;
+
 	CylinderClsnWithPos cylClsn;
 	Model model;
 	ShadowModel shadowModel;

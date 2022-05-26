@@ -417,20 +417,56 @@ _ZN10SphereClsn10DetectClsnEv                                                   
 _ZN13RaycastGround10DetectClsnEv                                                  = 0x02038f44;
 
 _ZN11RaycastLine4Line3SetERK7Vector3S3_                                           = 0x020fea84;
+
+_ZN16MeshColliderBaseC2Ev                                                         = 0x0203969c;
+_ZN16MeshColliderBaseD2Ev                                                         = 0x0203968c;
+_ZN16MeshColliderBaseD0Ev                                                         = 0x02039668;
+_ZN16MeshColliderBase9Virtual08Ev                                                 = 0x02039620;
+_ZN16MeshColliderBase10DetectClsnER13RaycastGround                                = 0x02039480;
+_ZN16MeshColliderBase10DetectClsnER11RaycastLine                                  = 0x02039478;
+_ZN16MeshColliderBase10DetectClsnER10SphereClsn                                   = 0x02039470;
+_ZN16MeshColliderBase10BeforeClsnER10ClsnResultP5ActorR7Vector3P10Vector3_16S7_   = 0x02039438;
+_ZN16MeshColliderBase12TransformPosERK7Vector3RS0_                                = 0x02039430;
+_ZN16MeshColliderBase14GetAngularVelYEv                                           = 0x02039428;
+_ZN16MeshColliderBase11GetVelocityER7Vector3                                      = 0x0203940c;
+_ZTV16MeshColliderBase                                                            = 0x02099380;
                                                         
 _ZN12MeshCollider7DisableEv                                                       = 0x02039140;
 _ZN12MeshCollider6EnableEP5Actor                                                  = 0x02039184;
 _ZN12MeshCollider9IsEnabledEv                                                     = 0x020393dc;
 _ZN12MeshCollider7SetFileEPcR10CLPS_Block                                         = 0x020396f0;
-_ZN12MeshColliderD0Ev                                                             = 0x0203982c;
-_ZN12MeshColliderD1Ev                                                             = 0x02039864;
 _ZN12MeshColliderC1Ev                                                             = 0x02039894;
+_ZN12MeshColliderC2Ev                                                             = 0x02039894;
+_ZN12MeshColliderD1Ev                                                             = 0x02039864;
+_ZN12MeshColliderD2Ev                                                             = 0x02039864;
+_ZN12MeshColliderD0Ev                                                             = 0x0203982c;
+_ZN12MeshCollider9Virtual08Ev                                                     = 0x020396d8;
+_ZN12MeshCollider14GetSurfaceInfoEsR11SurfaceInfo                                 = 0x01ffd920;
+_ZN12MeshCollider9GetNormalEsR7Vector3                                            = 0x01ffd8d8;
+_ZN12MeshCollider17GetTriangleOriginEsR7Vector3                                   = 0x01ffd890;
+_ZN12MeshCollider10DetectClsnER13RaycastGround                                    = 0x01ffd3f8;
+_ZN12MeshCollider10DetectClsnER11RaycastLine                                      = 0x01ffb0fc;
+_ZN12MeshCollider10DetectClsnER10SphereClsn                                       = 0x01ffb830;
+_ZTV12MeshCollider                                                                = 0x020993d4;
+
 _ZN18MovingMeshCollider9TransformERK9Matrix4x3s                                   = 0x02039f20;
 _ZN18MovingMeshCollider7SetFileEPcRK9Matrix4x35Fix12IiEsR10CLPS_Block             = 0x0203a1e0;
-_ZN18MovingMeshColliderD0Ev                                                       = 0x0203a444;
-_ZN18MovingMeshColliderD1Ev                                                       = 0x0203a470;
 _ZN18MovingMeshColliderC1Ev                                                       = 0x0203a494;
-                                                        
+_ZN18MovingMeshColliderC2Ev                                                       = 0x0203a494;
+_ZN18MovingMeshColliderD1Ev                                                       = 0x0203a470;
+_ZN18MovingMeshColliderD2Ev                                                       = 0x0203a470;
+_ZN18MovingMeshColliderD0Ev                                                       = 0x0203a444;
+_ZN18MovingMeshCollider9Virtual08Ev                                               = 0x0203a1dc;
+_ZN18MovingMeshCollider9GetNormalEsR7Vector3                                      = 0x02039ec0;
+_ZN18MovingMeshCollider17GetTriangleOriginEsR7Vector3                             = 0x02039e60;
+_ZN18MovingMeshCollider10DetectClsnER13RaycastGround                              = 0x02039cb8;
+_ZN18MovingMeshCollider10DetectClsnER11RaycastLine                                = 0x02039970;
+_ZN18MovingMeshCollider10DetectClsnER10SphereClsn                                 = 0x02039a3c;
+_ZN18MovingMeshCollider12TransformPosERK7Vector3RS0_                              = 0x02039930;
+_ZN18MovingMeshCollider14GetAngularVelYEv                                         = 0x02039924;
+_ZN18MovingMeshCollider11GetVelocityER7Vector3                                    = 0x02039908;
+_ZTV18MovingMeshCollider                                                          = 0x0209942c;
+
 _ZN7PathPtr6FromIDEj                                                              = 0x0203ac80;
 _ZNK7PathPtr7GetNodeER7Vector3j                                                   = 0x0203acdc;
 _ZNK7PathPtr8NumNodesEv                                                           = 0x0203ad60;
@@ -678,7 +714,7 @@ VTable_ActorDerived                                                             
 VTable_Actor                                                                      = 0x0208E3A4;
 VTable_Player                                                                     = 0x0210A83C;
 
-_ZN9ActorBaseC1Ev                                                                 = 0x02043DEC;
+_ZN9ActorBaseC2Ev                                                                 = 0x02043DEC;
 _ZN9ActorBase9SceneNodeC1Ev                                                       = 0x0203B4C4;
 _ZN9ActorBase9SceneNode5ResetEv                                                   = 0x0203B4AC;
 

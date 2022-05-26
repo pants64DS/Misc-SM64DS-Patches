@@ -53,9 +53,9 @@ struct PathPtr
 
 	// unsigned unk04 = 0;
 	
-	PathPtr() : ptr(nullptr) {}
-	PathPtr(const LevelFile::Path* path) : ptr(path) {}
-	PathPtr(const LevelFile::Path& path) : ptr(&path) {}
+	constexpr PathPtr() : ptr(nullptr) {}
+	constexpr PathPtr(const LevelFile::Path* path) : ptr(path) {}
+	constexpr PathPtr(const LevelFile::Path& path) : ptr(&path) {}
 	explicit PathPtr(unsigned pathID) { FromID(pathID); }
 	
 	void FromID(unsigned pathID);
