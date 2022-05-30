@@ -5,6 +5,7 @@
 #include <array>
 
 struct MovingCylinderClsn;
+struct BgCh;
 struct WithMeshClsn;
 struct RaycastGround;
 struct RaycastLine;
@@ -18,16 +19,22 @@ struct CLPS
 {
 	enum TextureID
 	{
-		TX_NONE = 0x00,
+		TX_NORMAL = 0x00,
 		TX_PATH = 0x01,
 		TX_GRASS = 0x02,
+		TX_PUDDLE = 0x03,
 		TX_ROCK = 0x04,
 		TX_WOOD = 0x05,
 		TX_SNOW = 0x06,
 		TX_ICE = 0x07,
 		TX_SAND = 0x08,
 		TX_FLOWERS = 0x09,
-		TX_GRATE = 0x0c
+		TX_MERRY_GO_ROUND_ROCK = 0xa,
+		TX_MERRY_GO_ROUND_WOOD = 0xb,
+		TX_GRATE = 0x0c,
+		TX_SILENT_0 = 0xd,
+		TX_SILENT_1 = 0xe,
+		TX_SILENT_2 = 0xf,
 	};
 
 	enum TractionID
@@ -37,7 +44,9 @@ struct CLPS
 		TR_UNSLIPPABLE_2 = 0x2,
 		TR_SLIPPERY_SLOPE = 0x3,
 		TR_SLIPPERY = 0x4,
-		TR_SLIP_NO_WALL_JUMP = 0x5
+		TR_SLIP_NO_WALL_JUMP = 0x5,
+		TR_NO_CRAWL_SLOPES = 0x6,
+		TR_NO_CRAWL_SLOPES_2 = 0x7
 	};
 
 	enum CamBehavID
@@ -47,6 +56,7 @@ struct CLPS
 		CA_ZOOM_OUT_GO_BEHIND = 0x2,
 		CA_GO_BEHIND_3 = 0x3,
 		CA_GO_BEHIND_4 = 0x4,
+		CA_UNK_5 = 0x5,
 		CA_NORMAL = 0x6,
 		CA_GO_BEHIND_7 = 0x7,
 		CA_GO_BEHIND_8 = 0x8,
@@ -63,33 +73,39 @@ struct CLPS
 	{
 		BH_NORMAL = 0x00,
 		BH_LAVA = 0x01,
+		BH_UNK_02 = 0x02,
 		BH_HANG_CEILING = 0x03,
 		BH_DEATH = 0x04,
 		BH_DEATH_2 = 0x05,
 		BH_LOW_JUMPS = 0x06,
-		BH_SLOW_QUICKSAND = 0x07,
-		BH_SLOW_QUICKSAND_2 = 0x08,
+		BH_SLOW_SHALLOW_QUICKSAND = 0x07,
+		BH_SLOW_DEEP_QUICKSAND = 0x08,
 		BH_INSTANT_QUICKSAND = 0x09,
-		BH_HARD = 0x0e,
+		BH_UNK_0A = 0x0a,
+		BH_WIND = 0xb,
+		BH_UNK_0C = 0x0c,
+		BH_SWITCH_LEVEL_ENTRANCE = 0x0d,
+		BH_NO_GETTING_STUCK = 0x0e,
 		BH_RACE_START = 0x0f,
 		BH_RACE_END = 0x10,
 		BH_VANISH_LUIGI_GRATE = 0x11,
-		BH_WEIRD_TELEPORT = 0x12,
-		BH_WIND_GUST = 0x13
+		BH_ENDLESS_STAIRS = 0x12,
+		BH_WIND_GUST = 0x13,
+		BH_CRAWL_THROUGH = 0x14
 	};
 
-	unsigned textureID   :  5 = 0;
-	bool     isWater     :  1 = false;
-	unsigned viewID      :  6 = 0x3f;
-	unsigned tractionID  :  3 = 0;
-	unsigned camBehavID  :  4 = 0;
-	unsigned behaviorID  :  5 = 0;
-	bool     camGoesThru :  1 = false;
-	bool     toxic       :  1 = false;
-	bool     isCamWall   :  1 = false;
-	unsigned padding     :  5 = 0;
-	unsigned windID      :  8 = 0xff;
-	unsigned padding2    : 24 = 0;
+	unsigned textureID       :  5 = 0;
+	bool     isWater         :  1 = false;
+	unsigned viewID          :  6 = 0x3f;
+	unsigned tractionID      :  3 = 0;
+	unsigned camBehavID      :  4 = 0;
+	unsigned behaviorID      :  5 = 0;
+	bool     camGoesThru     :  1 = false;
+	bool     isToxic         :  1 = false;
+	bool     onlyCamCollides :  1 = false;
+	unsigned padding         :  5 = 0;
+	unsigned windID          :  8 = 0xff;
+	unsigned padding2        : 24 = 0;
 };
 
 struct CLPS_Header
@@ -196,7 +212,7 @@ struct MeshColliderBase // vtable at 0x02099388
 
 	MeshColliderBase();
 	virtual ~MeshColliderBase();
-	virtual void Virtual08(); // all known implementations are bx lr // 02039620
+	virtual void Virtual08(); // all known implementations are bx lr
 	virtual void GetSurfaceInfo(short triangleID, SurfaceInfo& res) = 0;
 	virtual void GetNormal(short triangleID, Vector3& res) = 0;
 	virtual void GetTriangleOrigin(short triangleID, Vector3& res) = 0;
@@ -216,6 +232,10 @@ struct MeshColliderBase // vtable at 0x02099388
 	virtual bool TransformPos(const Vector3& pos, Vector3& res);
 	virtual uint16_t GetAngularVelY();
 	virtual void GetVelocity(Vector3& res);
+
+	bool Disable();
+	bool Enable(Actor* actor = nullptr);
+	bool IsEnabled();
 
 	[[gnu::always_inline]]
 	auto GetNormal(const short& triangleID)
@@ -269,10 +289,6 @@ struct MeshCollider : public MeshColliderBase // vtable at 0x020993dc
 	virtual bool DetectClsn(RaycastGround& ray) override;
 	virtual bool DetectClsn(RaycastLine&   ray) override;
 	virtual bool DetectClsn(SphereClsn& sphere) override;
-	
-	bool Disable();
-	bool Enable(Actor* actor = nullptr);
-	bool IsEnabled();
 
 	void SetFile(char* clsnFile, CLPS_Block& clps);
 
@@ -430,9 +446,12 @@ struct BgCh //That's the internal name, and I didn't know what else to call it s
 {	
 	enum Flags : unsigned
 	{
-		DETECT_FRONT_FACES = 1 << 0, //guess
+		DETECT_ORDINARY = 1 << 0, // Detect all faces with no special gimmicks related to their detectionability
 		DETECT_WATER = 1 << 1,
-		DETECT_BACK_FACES = 1 << 3, //guess
+		BELONGS_TO_CAMERA = 1 << 2,
+		DETECT_TOXIC = 1 << 3,
+		NO_DETECT_GRATE = 1 << 5,
+		IS_CRAWLING = 1 << 6
 	};
 	// <value on construction>, notes
 	unsigned* vTable; // 0x02099264
@@ -440,7 +459,17 @@ struct BgCh //That's the internal name, and I didn't know what else to call it s
 	unsigned objID; // -1, id of game object
 	Actor* objPtr; // 0, pointer to game object
 	ClsnResult result;
-	
+
+	// Actually a member function of MeshColliderBase but the this-parameter is unused
+	static bool ShouldPassThroughImpl (
+		void* unused, const CLPS& clps, const BgCh& bgch, bool isWall
+	);
+
+	bool ShouldPassThrough(const CLPS& clps, bool isWall)
+	{
+		return ShouldPassThroughImpl(this, clps, *this, isWall);
+	}
+
 	void SetFlag_8();
 	void SetFlag_2();
 	void ClearFlag_1();
@@ -520,11 +549,11 @@ struct SphereClsn : public BgCh
 	unsigned unk0f0;
 	unsigned unk0f4;
 	unsigned unk0f8;
-	Fix12i unk0fc;
-	Fix12i unk100;
-	Fix12i unk104;
+	Vector3 storedNormal;
 	Fix12i unk108;
 };
+
+static_assert(sizeof(SphereClsn) == 0x10c);
 
 struct WithMeshClsn
 {
