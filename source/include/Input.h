@@ -3,7 +3,6 @@
 
 #include "SM64DS_Common.h"
 
-
 struct Input
 {
 	enum Buttons : uint16_t

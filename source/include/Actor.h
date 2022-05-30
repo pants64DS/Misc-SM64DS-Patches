@@ -51,16 +51,16 @@ struct ActorBase //internal name: fBase
 	void* operator new(size_t count); //actor bases have their own heap
 	void operator delete(void* ptr) { Memory::Deallocate(ptr, Memory::gameHeapPtr); }
 
-	virtual int  InitResources(); // 0x020e558c
+	virtual int  InitResources();
 	virtual bool BeforeInitResources();
 	virtual void AfterInitResources(unsigned vfSuccess);
-	virtual int  CleanupResources(); // 0x020e32d4
+	virtual int  CleanupResources();
 	virtual bool BeforeCleanupResources();
 	virtual void AfterCleanupResources(unsigned vfSuccess);
-	virtual int  Behavior(); // 0x020e4d24
+	virtual int  Behavior();
 	virtual bool BeforeBehavior();
 	virtual void AfterBehavior(unsigned vfSuccess);
-	virtual int  Render(); // 0x020e3a08
+	virtual int  Render();
 	virtual bool BeforeRender();
 	virtual void AfterRender(unsigned vfSuccess);
 	virtual void Virtual30();
@@ -108,7 +108,6 @@ struct ActorDerived : public ActorBase //internal name: dBase
 
 struct Actor : public ActorBase				//internal name: dActor			
 {
-
 	enum Flags : int
 	{
 		NO_BEHAVIOR_IF_OFF_SCREEN = 1 << 0,
@@ -171,10 +170,10 @@ struct Actor : public ActorBase				//internal name: dActor
 	virtual int  CleanupResources() override;
 	virtual bool BeforeCleanupResources() override;
 	virtual void AfterCleanupResources(unsigned vfSuccess) override;
-	virtual int  Behavior() override;
+	// virtual int  Behavior(); // not overridden
 	virtual bool BeforeBehavior() override;
 	virtual void AfterBehavior(unsigned vfSuccess) override;
-	virtual int  Render() override;
+	// virtual int  Render(); // not overridden
 	virtual bool BeforeRender() override;
 	virtual void AfterRender(unsigned vfSuccess) override;
 	virtual ~Actor();
