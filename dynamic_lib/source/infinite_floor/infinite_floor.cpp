@@ -48,6 +48,7 @@ bool InfiniteFloor::DetectClsn(RaycastGround& ray)
 	if (ray.ShouldPassThrough(GetCLPS(), false)) return false;
 
 	if (ray.pos.y < this->pos.y) return false;
+	if (ray.hadCollision && ray.clsnPosY > this->pos.y) return false;
 
 	GetSurfaceInfo(0, ray.result.surfaceInfo);
 	ray.result.triangleID = 0;
@@ -65,21 +66,26 @@ bool InfiniteFloor::DetectClsn(RaycastLine& ray)
 	if (ray.line.pos1.y > this->pos.y) return false;
 
 	const Vector3 v = ray.line.pos1 - ray.line.pos0;
+	Vector3 newClsnPos;
 
 	if (Abs(v.y) < 1._f)
-		ray.clsnPos = ray.line.pos0 + ray.line.pos1 >> 1;
+		newClsnPos = ray.line.pos0 + ray.line.pos1 >> 1;
 	else
 	{
 		const Fix12i t = (this->pos.y - ray.line.pos0.y) / v.y;
 
-		ray.clsnPos.x = ray.line.pos0.x + v.x * t;
-		ray.clsnPos.y = this->pos.y;
-		ray.clsnPos.z = ray.line.pos0.z + v.z * t;
+		newClsnPos.x = ray.line.pos0.x + v.x * t;
+		newClsnPos.y = this->pos.y;
+		newClsnPos.z = ray.line.pos0.z + v.z * t;
 	}
+
+	if (ray.line.pos0.Dist(ray.clsnPos) < ray.line.pos0.Dist(newClsnPos))
+		return false;
 
 	GetSurfaceInfo(0, ray.result.surfaceInfo);
 	ray.result.triangleID = 0;
 	ray.hadCollision = true;
+	ray.clsnPos = newClsnPos;
 
 	return true;
 }
@@ -95,7 +101,16 @@ bool InfiniteFloor::DetectClsn(SphereClsn& sphere)
 	sphere.result.triangleID = 0;
 
 	const Fix12i sphereBottomY = sphere.pos.y - sphere.radius;
-	sphere.pushback1 = Vector3::Temp(0._f, this->pos.y - sphereBottomY, 0._f);
+	const Vector3 newPushBack = {0._f, this->pos.y - sphereBottomY, 0._f};
+
+	if (sphere.pushback0.x > newPushBack.x) sphere.pushback0.x = newPushBack.x;
+	if (sphere.pushback0.y > newPushBack.y) sphere.pushback0.y = newPushBack.y;
+	if (sphere.pushback0.z > newPushBack.z) sphere.pushback0.z = newPushBack.z;
+
+	if (sphere.pushback1.x < newPushBack.x) sphere.pushback1.x = newPushBack.x;
+	if (sphere.pushback1.y < newPushBack.y) sphere.pushback1.y = newPushBack.y;
+	if (sphere.pushback1.z < newPushBack.z) sphere.pushback1.z = newPushBack.z;
+
 	sphere.resultFlags |= SphereClsn::COLLISION_EXISTS | SphereClsn::ON_GROUND;
 
 	GetSurfaceInfo(0, sphere.floorResult.surfaceInfo);
