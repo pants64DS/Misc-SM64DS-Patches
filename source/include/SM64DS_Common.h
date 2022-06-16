@@ -1457,11 +1457,28 @@ struct Matrix4x3 : private Matrix3x3 // Matrix is column-major!
 
 struct SharedFilePtr
 {
-	uint16_t fileID;
-	uint8_t numRefs;
-	char* filePtr;
+	uint16_t fileID = ~0;
+	uint8_t numRefs = 0;
+	char* filePtr = nullptr;
+
+	struct IDs
+	{
+		uint16_t fileID;
+		uint16_t ov0ID;
+
+		static consteval IDs Get(const char* name);
+	};
+
+	consteval SharedFilePtr(const SharedFilePtr&) = default;
+	consteval SharedFilePtr(uint16_t fileID) : fileID(fileID) {}
+	consteval SharedFilePtr(const std::same_as<char> auto* name):
+		fileID(IDs::Get(name).fileID) {}
 	
-	SharedFilePtr& Construct(unsigned ov0FileID);
+	SharedFilePtr& FromOv0ID(unsigned ov0FileID);
+
+	[[deprecated("'Construct' has been renamed to 'FromOv0ID'")]]
+	SharedFilePtr& Construct(unsigned ov0FileID) { return FromOv0ID(ov0FileID); }
+
 	char* Load();
 	void Release();
 };
