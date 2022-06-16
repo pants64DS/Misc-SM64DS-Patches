@@ -190,12 +190,13 @@ _ZN5Actor12ReflectAngleE5Fix12IiES1_s                                           
 _ZN5Actor24BumpedUnderneathByPlayerER6Player                                      = 0x02010518;
 _ZN5Actor16JumpedOnByPlayerER12CylinderClsnR6Player                               = 0x0201054c;
 _ZN5Actor12Unk_0201061cER6Playerjj                                                = 0x0201061c;
+_ZNK5Actor22FindClosestWithActorIDEj                                              = 0x020108c4;
 _ZN5Actor13DistToFPlayerEv                                                        = 0x0201092c;
 _ZN5Actor16FarthestPlayerEv                                                       = 0x02010958;
 _ZN5Actor23HorzAngleToCPlayerOrAngEv                                              = 0x0201097c;
 _ZN5Actor18HorzAngleToCPlayerEv                                                   = 0x020109b8;
 _ZN5Actor13DistToCPlayerEv                                                        = 0x020109e4;
-_ZN5Actor13ClosestPlayerEv                                                        = 0x02010ad8;
+_ZNK5Actor13ClosestPlayerEv                                                       = 0x02010ad8;
 _ZN5Actor18DropShadowScaleXYZER11ShadowModelR9Matrix4x35Fix12IiES5_S5_j           = 0x02010b9c;
 _ZN5Actor19DropShadowRadHeightER11ShadowModelR9Matrix4x35Fix12IiES5_j             = 0x02010be8;
 _ZN5Actor9UpdatePosEP12CylinderClsn                                               = 0x02010c30;
@@ -316,7 +317,7 @@ _ZN9ModelAnimD1Ev                                                               
 _ZN9ModelAnimD2Ev                                                                 = 0x0201689C;
 _ZN9ModelAnimC1Ev                                                                 = 0x02016958;
 _ZN9ModelAnimC2Ev                                                                 = 0x02016998;
-                                                        
+
 _ZN5Model6RenderEPK7Vector3                                                       = 0x02016b78;
 _ZN5Model9Virtual10ER9Matrix4x3                                                   = 0x02016bb8;
 _ZN5Model9DoSetFileEPcii                                                          = 0x02016bf8;
@@ -329,9 +330,9 @@ _ZN5ModelC2Ev                                                                   
 _ZN9ModelBase7SetFileEPcii                                                        = 0x02016fd4;
 _ZN15TextureSequence8LoadFileER13SharedFilePtr                                    = 0x020178e4;
 _ZN9Animation8LoadFileER13SharedFilePtr                                           = 0x0201794c;
-_ZN13SharedFilePtr9ConstructEj                                                    = 0x0201799c;
+_ZN13SharedFilePtr9FromOv0IDEj                                                    = 0x0201799c;
 _ZN5Model8LoadFileER13SharedFilePtr                                               = 0x02017a3c;
-_ZN18MovingMeshCollider8LoadFileER13SharedFilePtr                                 = 0x02017afc;
+_ZN12MeshCollider8LoadFileER13SharedFilePtr                                       = 0x02017afc;
 _ZN13SharedFilePtr7ReleaseEv                                                      = 0x02017b64;
 _ZN13SharedFilePtr4LoadEv                                                         = 0x02017c54;
 UnloadObjBankOverlay                                                              = 0x02017f34;
@@ -417,6 +418,7 @@ _ZN10SphereClsn10DetectClsnEv                                                   
 _ZN13RaycastGround10DetectClsnEv                                                  = 0x02038f44;
 
 _ZN11RaycastLine4Line3SetERK7Vector3S3_                                           = 0x020fea84;
+_ZN4BgCh21ShouldPassThroughImplEPvRK4CLPSRKS_b                                    = 0x02039488;
 
 _ZN16MeshColliderBaseC2Ev                                                         = 0x0203969c;
 _ZN16MeshColliderBaseD2Ev                                                         = 0x0203968c;
@@ -430,10 +432,10 @@ _ZN16MeshColliderBase12TransformPosERK7Vector3RS0_                              
 _ZN16MeshColliderBase14GetAngularVelYEv                                           = 0x02039428;
 _ZN16MeshColliderBase11GetVelocityER7Vector3                                      = 0x0203940c;
 _ZTV16MeshColliderBase                                                            = 0x02099380;
-                                                        
-_ZN12MeshCollider7DisableEv                                                       = 0x02039140;
-_ZN12MeshCollider6EnableEP5Actor                                                  = 0x02039184;
-_ZN12MeshCollider9IsEnabledEv                                                     = 0x020393dc;
+_ZN16MeshColliderBase7DisableEv                                                   = 0x02039140;
+_ZN16MeshColliderBase6EnableEP5Actor                                              = 0x02039184;
+_ZN16MeshColliderBase9IsEnabledEv                                                 = 0x020393dc;
+
 _ZN12MeshCollider7SetFileEPcR10CLPS_Block                                         = 0x020396f0;
 _ZN12MeshColliderC1Ev                                                             = 0x02039894;
 _ZN12MeshColliderC2Ev                                                             = 0x02039894;
@@ -550,7 +552,7 @@ _ZN8Particle5Drift4FuncERNS_10EffectDataEPcR7Vector3                            
 _ZN5Sound23InfoInstrumentBankEntry9GetWithIDEj                                    = 0x02050bb0;
 _ZN5Sound17InfoSequenceEntry9GetWithIDEj                                          = 0x02050c78;
           
-Matrix3x3_LoadIdentity                                                            = 0x020524f0; 
+Matrix3x3_LoadIdentity                                                            = 0x020524f0;
 MulVec3Mat3x3                                                                     = 0x020525a0;
 MulMat3x3Mat3x3                                                                   = 0x02052624;
 Matrix4x3_LoadIdentity                                                            = 0x020527c0;       

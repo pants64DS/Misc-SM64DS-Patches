@@ -46,7 +46,7 @@ CFLAGS := -Wall -Wextra -Werror -Wno-unused-parameter \
 
 CXXFLAGS := $(CFLAGS) -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -faligned-new=4
 
-LDFLAGS =  -T $(CURDIR)/../symbols.x -T $(CURDIR)/../linker.x -Map $(TARGET).map
+LDFLAGS =  -T $(CURDIR)/../../symbols.x -T $(CURDIR)/../../linker.x -Map $(TARGET).map
 
 ifdef CODEADDR
 	LDFLAGS += -Ttext $(CODEADDR)

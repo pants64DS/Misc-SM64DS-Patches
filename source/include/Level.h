@@ -57,6 +57,7 @@ struct PathPtr
 	constexpr PathPtr(const LevelFile::Path* path) : ptr(path) {}
 	constexpr PathPtr(const LevelFile::Path& path) : ptr(&path) {}
 	explicit PathPtr(unsigned pathID) { FromID(pathID); }
+	explicit PathPtr(int pathID) : PathPtr(static_cast<unsigned>(pathID)) {}
 	
 	void FromID(unsigned pathID);
 	void GetNode(Vector3& vF, unsigned index) const;

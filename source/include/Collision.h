@@ -290,6 +290,7 @@ struct MeshCollider : public MeshColliderBase // vtable at 0x020993dc
 	virtual bool DetectClsn(RaycastLine&   ray) override;
 	virtual bool DetectClsn(SphereClsn& sphere) override;
 
+	static char* LoadFile(SharedFilePtr& filePtr);
 	void SetFile(char* clsnFile, CLPS_Block& clps);
 
 	using MeshColliderBase::GetNormal, MeshColliderBase::GetTriangleOrigin, MeshColliderBase::TransformPos;
@@ -329,7 +330,6 @@ struct MovingMeshCollider : public MeshCollider // vtable at 0x02099434
 	virtual uint16_t GetAngularVelY() override;
 	virtual void GetVelocity(Vector3& res) override;
 	
-	static char* LoadFile(SharedFilePtr& filePtr);
 	void SetFile(char* clsnFile, const Matrix4x3& mat, Fix12i scale, short angleY, CLPS_Block& clps);
 	void Transform(const Matrix4x3& mat, short rotY);
 
@@ -435,7 +435,7 @@ struct ClsnResult
 	short clsnID; //not constant per object, 0x18 if in air (only 24 mesh colliders can be active at a time)
 	unsigned objID;
 	Actor* obj;
-	MovingMeshCollider* meshClsn;
+	MeshColliderBase* meshClsn;
 	
 	ClsnResult();
 	~ClsnResult();

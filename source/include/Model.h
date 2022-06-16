@@ -191,7 +191,7 @@ struct Animation	//internal: FrameCtrl; done
 	Flags GetFlags();
 	void SetFlags(Flags flags);
 	unsigned GetFrameCount();
-	void SetAnimation(uint16_t frames, Flags flags, Fix12i speed, uint16_t startFrame);
+	void SetAnimation(uint16_t frames, Flags flags, Fix12i speed = 1._f, uint16_t startFrame = 0);
 	void Copy(const Animation& anim);
 	bool Func_02015A98(int arg0); //Does something like simulating an advance? Like checking if the next frame expires the animation...
 
@@ -316,7 +316,7 @@ struct ModelAnim : public Model, Animation	//internal: ModelAnm
 	virtual void Render(const Vector3* scale = nullptr) override; // Calls UpdateVerts and then Model::Render
 	virtual void Virtual18(unsigned arg0, const Vector3* scale);  // Calls Virtual10 and then Model::Render
 	
-	void SetAnim(char* animFile, int flags, Fix12i speed, unsigned startFrame);
+	void SetAnim(char* animFile, int flags, Fix12i speed = 1._f, unsigned startFrame = 0);
 
 	void Copy(const ModelAnim& anim, char* newFile);					//if newFile != nullptr, it gets copied instead of anim->file
 };

@@ -221,7 +221,7 @@ struct Actor : public ActorBase				//internal name: dActor
 	void Unk_0201061c(Player& player, unsigned numCoins, unsigned coinType);
 
 	Fix12i DistToCPlayer();
-	Player* ClosestPlayer();
+	Player* ClosestPlayer() const;
 	short HorzAngleToCPlayer();
 	short HorzAngleToCPlayerOrAng(short ang);
 	Player* FarthestPlayer();
@@ -241,6 +241,7 @@ struct Actor : public ActorBase				//internal name: dActor
 	static Actor* Next(const Actor* actor); // next in the linked list. Returns the 1st object if given a nullptr. Returns a nullptr if given the last actor
 	static Actor* FindWithID(unsigned id);
 	static Actor* FindWithActorID(unsigned actorID, Actor* searchStart = nullptr); // searchStart is not included.
+	Actor* FindClosestWithActorID(unsigned actorID) const;
 
 	[[deprecated("Use Actor::Iterate instead")]]
 	static void ForEach(auto&& f)
@@ -274,6 +275,18 @@ struct Actor : public ActorBase				//internal name: dActor
 	static auto* Spawn(unsigned param1, const Vector3& pos, auto... args)
 	{
 		return static_cast<ResolveAlias<T>::Type*>(Spawn(T::staticActorID, param1, pos, args...));
+	}
+
+	template<class T>
+	static ResolveAlias<T>::Type* Find()
+	{
+		return static_cast<ResolveAlias<T>::Type*>(FindWithActorID(T::staticActorID));
+	}
+
+	template<class T>
+	ResolveAlias<T>::Type* FindClosest() const
+	{
+		return static_cast<ResolveAlias<T>::Type*>(FindClosestWithActorID(T::staticActorID));
 	}
 
 	template<class T = Actor>
