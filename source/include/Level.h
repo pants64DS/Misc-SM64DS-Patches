@@ -37,6 +37,7 @@ extern "C"
 	extern LevelFile::View (*VIEW_ARR_PTR)[];
 	extern LevelFile::Entrance (*ENTRANCE_ARR_PTR)[];
 	extern LevelFile::Path (*PATH_ARR_PTR)[];
+	extern Vector3_16 (*PATH_NODE_ARR_PTR)[];
 
 	extern uint8_t LAST_ENTRANCE_ID;
 	extern uint8_t NUM_ENTRANCES;
@@ -63,14 +64,17 @@ struct PathPtr
 	void GetNode(Vector3& vF, unsigned index) const;
 	unsigned NumNodes() const;
 
-	[[gnu::always_inline]]
-	auto GetNode(const unsigned& index) const
+	[[gnu::always_inline, nodiscard]]
+	auto GetNode(const std::integral auto& index) const
 	{
 		return Vector3::Proxy([this, &index]<bool resMayAlias> [[gnu::always_inline]] (Vector3& res)
 		{
 			GetNode(res, index);
 		});
 	}
+
+	[[gnu::always_inline, nodiscard]]
+	auto operator[](const std::integral auto& index) const { return GetNode(index); }
 
 	inline const LevelFile::Path& operator* () const { return *ptr; }
 	inline const LevelFile::Path* operator->() const { return ptr; }
@@ -85,11 +89,6 @@ struct PathPtr
 
 namespace LevelFile
 {
-	struct PathNode
-	{
-		Vector3_16 pos;
-	};
-	
 	struct Path
 	{
 		uint16_t firstNodeID;

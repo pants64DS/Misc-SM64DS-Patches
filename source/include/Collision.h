@@ -44,7 +44,7 @@ struct CLPS
 		TR_UNSLIPPABLE_2 = 0x2,
 		TR_SLIPPERY_SLOPE = 0x3,
 		TR_SLIPPERY = 0x4,
-		TR_SLIP_NO_WALL_JUMP = 0x5,
+		TR_SLIP_NO_WALL_JUMP_ABOVE = 0x5, // Prevents wall jumps when it's the players floorTracID
 		TR_NO_CRAWL_SLOPES = 0x6,
 		TR_NO_CRAWL_SLOPES_2 = 0x7
 	};
@@ -187,6 +187,12 @@ struct SurfaceInfo
 
 struct MeshColliderBase // vtable at 0x02099388
 {
+	enum ResultFlags
+	{
+		ON_GROUND = 1 << 0,
+		ON_WALL = 1 << 1
+	};
+
 	Actor* actor;
 	unsigned actorUniqueID;
 	Fix12i range;
@@ -216,9 +222,9 @@ struct MeshColliderBase // vtable at 0x02099388
 	virtual void GetSurfaceInfo(short triangleID, SurfaceInfo& res) = 0;
 	virtual void GetNormal(short triangleID, Vector3& res) = 0;
 	virtual void GetTriangleOrigin(short triangleID, Vector3& res) = 0;
-	virtual bool DetectClsn(RaycastGround& ray);
-	virtual bool DetectClsn(RaycastLine& ray);
-	virtual bool DetectClsn(SphereClsn& sphere);
+	virtual unsigned DetectClsn(RaycastGround& ray);
+	virtual unsigned DetectClsn(RaycastLine& ray);
+	virtual unsigned DetectClsn(SphereClsn& sphere);
 
 	virtual void BeforeClsn (
 		ClsnResult& wmClsnResult, // Yes, the first two parameters are in reversed order in the callback
@@ -286,12 +292,23 @@ struct MeshCollider : public MeshColliderBase // vtable at 0x020993dc
 	virtual void GetNormal(short triangleID, Vector3& res) override;
 	virtual void GetTriangleOrigin(short triangleID, Vector3& res) override;
 
-	virtual bool DetectClsn(RaycastGround& ray) override;
-	virtual bool DetectClsn(RaycastLine&   ray) override;
-	virtual bool DetectClsn(SphereClsn& sphere) override;
+	virtual unsigned DetectClsn(RaycastGround& ray) override;
+	virtual unsigned DetectClsn(RaycastLine&   ray) override;
+	virtual unsigned DetectClsn(SphereClsn& sphere) override;
 
-	static char* LoadFile(SharedFilePtr& filePtr);
-	void SetFile(char* clsnFile, CLPS_Block& clps);
+	void SetFile(KCL_File& clsnFile, CLPS_Block& clps);
+
+	[[deprecated]]
+	void SetFile(char* clsnFile, CLPS_Block& clps)
+	{
+		SetFile(*reinterpret_cast<KCL_File*>(clsnFile), clps);
+	}
+
+	[[deprecated]]
+	static char* LoadFile(SharedFilePtr& filePtr)
+	{
+		return reinterpret_cast<char*>(&filePtr.LoadKCL());
+	}
 
 	using MeshColliderBase::GetNormal, MeshColliderBase::GetTriangleOrigin, MeshColliderBase::TransformPos;
 };
@@ -322,16 +339,22 @@ struct MovingMeshCollider : public MeshCollider // vtable at 0x02099434
 	virtual void GetNormal(short triangleID, Vector3& res) override;
 	virtual void GetTriangleOrigin(short triangleID, Vector3& res) override;
 
-	virtual bool DetectClsn(RaycastGround& ray) override;
-	virtual bool DetectClsn(RaycastLine&   ray) override;
-	virtual bool DetectClsn(SphereClsn& sphere) override;
+	virtual unsigned DetectClsn(RaycastGround& ray) override;
+	virtual unsigned DetectClsn(RaycastLine&   ray) override;
+	virtual unsigned DetectClsn(SphereClsn& sphere) override;
 
 	virtual bool TransformPos(const Vector3& pos, Vector3& res) override;
 	virtual uint16_t GetAngularVelY() override;
 	virtual void GetVelocity(Vector3& res) override;
 	
-	void SetFile(char* clsnFile, const Matrix4x3& mat, Fix12i scale, short angleY, CLPS_Block& clps);
+	void SetFile(KCL_File& clsnFile, const Matrix4x3& mat, Fix12i scale, short angleY, CLPS_Block& clps);
 	void Transform(const Matrix4x3& mat, short rotY);
+
+	[[deprecated]]
+	void SetFile(char* clsnFile, const Matrix4x3& mat, Fix12i scale, short angleY, CLPS_Block& clps)
+	{
+		SetFile(*reinterpret_cast<KCL_File*>(clsnFile), mat, scale, angleY, clps);
+	}
 
 	using MeshColliderBase::GetNormal, MeshColliderBase::GetTriangleOrigin, MeshColliderBase::TransformPos;
 };

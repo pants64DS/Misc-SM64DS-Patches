@@ -21,7 +21,7 @@ extern "C"
 	//Remember to have these loaded before spawning an object with them
 	//They are as disorganized here as they are in memory.
 	extern SharedFilePtr LUIGI_CAP_MODEL_PTR;
-	extern SharedFilePtr NUMBER_MODEL_PTR;
+	extern SharedFilePtr RED_NUMBER_MODEL_PTR;
 	extern SharedFilePtr POWER_FLOWER_OPEN_MODEL_PTR;
 	extern SharedFilePtr COIN_YELLOW_POLY32_MODEL_PTR;
 	extern SharedFilePtr WARIO_CAP_MODEL_PTR;
@@ -76,12 +76,17 @@ namespace GXFIFO
 		GXPORT_MTX_LOAD_4x3 = matrix->c3.x.val;		GXPORT_MTX_LOAD_4x3 = matrix->c3.y.val;		GXPORT_MTX_LOAD_4x3 = matrix->c3.z.val;
 	}
 
-	//Do NOT set the light vector to <1, 0, 0>, <0, 1, 0>, or <0, 0, 1>. Instead, do <0x0.ff8, 0, 0>, for example.
-	inline void SetLightVector(int lightID, Fix12i x, Fix12i y, Fix12i z) //Fixed Point 20.12
+	// Do NOT set the light vector to <1, 0, 0>, <0, 1, 0>, or <0, 0, 1>. Instead, do <0x0.ff8, 0, 0>, for example.
+	inline void SetLightVector(int lightID, Fix12i x, Fix12i y, Fix12i z)
 	{
 		GXPORT_LIGHT_VECTOR = (((z.val >> 3 & 0x1ff) | (z.val >> 22 & 0x200)) << 10 |
 								(y.val >> 3 & 0x1ff) | (y.val >> 22 & 0x200)) << 10 |
 								(x.val >> 3 & 0x1ff) | (x.val >> 22 & 0x200) | lightID << 30;
+	}
+
+	inline void SetLightVector(int lightID, const Vector3& v)
+	{
+		SetLightVector(lightID, v.x, v.y, v.z);
 	}
 
 	inline void SetLightColor(int lightID, uint8_t r, uint8_t g, uint8_t b) //0x00 to 0xff
@@ -91,6 +96,120 @@ namespace GXFIFO
 							 (unsigned)r >> 3 | lightID << 30;
 	}
 }
+
+struct Command30
+{
+	unsigned diffuse : 15;
+	unsigned ambient : 15;
+	bool setsVertexColor : 1 = false;
+
+	constexpr operator unsigned() const
+	{
+		return diffuse | setsVertexColor << 15 | ambient << 16;
+	}
+};
+
+struct Command31
+{
+	unsigned specular : 15;
+	unsigned emission : 15;
+	bool usesShininessTable : 1 = false;
+
+	constexpr operator unsigned() const
+	{
+		return specular | usesShininessTable << 15 | emission << 16;
+	}
+};
+
+struct BMD_File
+{
+	struct Bone
+	{
+		enum Flags
+		{
+			BILLBOARD = 1 << 0
+		};
+
+		int boneID;
+		char* name;
+		short offsetToParent; // in bones, not in bytes
+		short hasChildren;
+		int offsetToNextSibling; // in bones, not in bytes
+		Vector3 scale;
+		Vector3_16 rotation;
+		uint16_t unk22; // probably padding
+		Vector3 translation;
+		unsigned numDisplayListMaterialPairs;
+		void* materialIDLis;
+		void* diplayListIDList;
+		unsigned flags;
+	};
+
+	static_assert(sizeof(Bone) == 0x40);
+
+	struct Texture
+	{
+		char* name;
+		char* data; // dangling after Model::LoadFile
+		unsigned size;
+		uint16_t width;
+		uint16_t height;
+		unsigned cmd2aPart1;
+	};
+
+	static_assert(sizeof(Texture) == 0x14);
+
+	struct Palette
+	{
+		char* name;
+		char* data; // dangling after Model::LoadFile
+		unsigned size;
+		unsigned vramOffset;
+	};
+
+	static_assert(sizeof(Palette) == 0x10);
+
+	struct Material
+	{
+		char* name;
+		int textureID; // -1 when no texture
+		int paletteID; // -1 when no palette
+		Vector2 scale;
+		short rotation;
+		Vector2 translation;
+		unsigned cmd2aPart2;
+		unsigned cmd29;
+		unsigned cmd30;
+		unsigned cmd31;
+	};
+
+	static_assert(sizeof(Material) == 0x30);
+
+	unsigned scaleShift;
+	unsigned numBones;
+	Bone* bones;
+	unsigned numDisplayLists;
+	void* displayLists;
+	unsigned numTextures;
+	Texture* textures;
+	unsigned numPalettes;
+	Palette* palettes;
+	unsigned numMaterials;
+	Material* materials;
+	void* TransformMap;
+	unsigned unk30;
+	unsigned unk34;
+	unsigned ramSize;
+
+	// These three functions are called in SharedFilePtr::LoadBMD
+	// if numRefs == 1 after loading the file
+
+	void AdjustPointers(); // before this is called, the pointers are offsets within the file
+	void LoadTexturesToVRAM(); // also loads texture palettes
+	void ShrinkAllocation(); // unloads textures and palettes from RAM by shrinking the allocation size to ramSize
+};
+
+static_assert(sizeof(BMD_File) == 0x3c);
 
 struct MaterialProperties
 {
@@ -214,11 +333,36 @@ struct Material
 	unsigned polygonAttr; //gx command 0x29
 	unsigned difAmb; //gx command 0x30
 	unsigned speEmi; //gx command 0x31
+
+	constexpr void EnableScrolling()
+	{
+		teximageParam &= ~0xC0000000;
+		teximageParam |=  0x40000000;
+	}
+
+	constexpr void SetAlpha(unsigned alpha) // from 0 to 31
+	{
+		polygonAttr &= ~(0b11111 << 16);
+		polygonAttr |= (alpha & 0b11111) << 16;
+	}
+
+	constexpr void SetPolygonID(unsigned polygonID) // from 0 to 63
+	{
+		polygonAttr &= ~(0x3f << 24);
+		polygonAttr |= (polygonID & 0x3f) << 24;
+	}
+
+	constexpr void ShowBackSide () { polygonAttr |=  (1 << 6); }
+	constexpr void HideBackSide () { polygonAttr &= ~(1 << 6); }
+	constexpr void ShowFrontSide() { polygonAttr |=  (1 << 7); }
+	constexpr void HideFrontSide() { polygonAttr &= ~(1 << 7); }
+	constexpr void EnableFog    () { polygonAttr |=  (1 << 15); }
+	constexpr void DisableFog   () { polygonAttr &= ~(1 << 15); }
 };
 
 struct ModelComponents
 {
-	char* modelFile;
+	BMD_File* modelFile;
 	Material* materials;
 	Bone* bones;
 	Matrix4x3* transforms;
@@ -226,7 +370,7 @@ struct ModelComponents
 	
 	void UpdateBones(char* animFile, int frame);
 	void UpdateVertsUsingBones();
-	void Render(Matrix4x3* mat, Vector3* scale);
+	void Render(Matrix4x3* mat = nullptr, Vector3* scale = nullptr);
 };
 
 
@@ -236,9 +380,15 @@ struct MaterialChanger : Animation		//internal: AnmMaterial; done
 
 	MaterialChanger();
 	virtual ~MaterialChanger();
-    static void Prepare(char* modelFile, MaterialDef& matDef);
+    static void Prepare(BMD_File& modelFile, MaterialDef& matDef);
 	void SetMaterial(MaterialDef& matDef, Flags flags, Fix12i speed, unsigned startFrame);
 	void Update(ModelComponents& modelData);
+
+	[[deprecated]]
+	static void Prepare(char* modelFile, MaterialDef& matDef)
+	{
+		Prepare(*reinterpret_cast<BMD_File*>(modelFile), matDef);
+	}
 };
 
 
@@ -248,9 +398,15 @@ struct TextureTransformer : Animation	//internal: AnmTexSRT; done
 
 	TextureTransformer();
 	virtual ~TextureTransformer();
-    static void Prepare(char* modelFile, TexSRTDef& texDef);
+    static void Prepare(BMD_File& modelFile, TexSRTDef& texDef);
 	void SetTexSRT(TexSRTDef& texDef, Flags flags, Fix12i speed, unsigned startFrame);
 	void Update(ModelComponents& modelData);
+
+	[[deprecated]]
+	static void Prepare(char* modelFile, TexSRTDef& texDef)
+	{
+		Prepare(*reinterpret_cast<BMD_File*>(modelFile), texDef);
+	}
 };
 
 
@@ -260,11 +416,16 @@ struct TextureSequence : Animation		//internal: AnmTexPat; done
 
 	TextureSequence();
 	virtual ~TextureSequence();
-    static void Prepare(char* modelFile, char* texSeqFile);
+    static void Prepare(BMD_File& modelFile, char* texSeqFile);
 	void SetFile(char* texSeqFile, Flags flags, Fix12i speed, unsigned startFrame);
 	void Update(ModelComponents& modelData);	
 
 	static char* LoadFile(SharedFilePtr& filePtr);
+
+	static void Prepare(char* modelFile, char* texSeqFile)
+	{
+		Prepare(*reinterpret_cast<BMD_File*>(modelFile), texSeqFile);
+	}
 };
 
 
@@ -280,8 +441,14 @@ struct ModelBase	//internal: Model; done
 	ModelBase(const ModelBase&) = delete;
 	ModelBase(ModelBase&&) = delete;
 
-	bool SetFile(char* file, int arg1, int arg2);
-	virtual bool DoSetFile(char* file, int arg1, int arg2) = 0;
+	bool SetFile(BMD_File& file, bool enableFog = false, int polygonID = -1);
+	virtual bool DoSetFile(BMD_File& file, bool enableFog = false, int polygonID = -1) = 0;
+
+	[[deprecated]]
+	bool SetFile(char* file, bool enableFog = false, int polygonID = -1)
+	{
+		return SetFile(*reinterpret_cast<BMD_File*>(file), enableFog, polygonID);
+	}
 };
 
 
@@ -295,12 +462,19 @@ struct Model : public ModelBase		//internal: SimpleModel
 	
 	Model();
 	virtual ~Model();
-	virtual bool DoSetFile(char* file, int arg1, int arg2) override;
+	virtual bool DoSetFile(BMD_File& file, bool enableFog = false, int polygonID = -1) override;
 	virtual void UpdateVerts();
 	virtual void Virtual10(Matrix4x3& arg0);
 	virtual void Render(const Vector3* scale = nullptr);
-	
-	static char* LoadFile(SharedFilePtr& filePtr);
+
+	void Render(const Vector3& scale) { Render(&scale); }
+	void Render(Fix12i scale) { Render({scale, scale, scale}); }
+
+	[[deprecated]]
+	static char* LoadFile(SharedFilePtr& filePtr)
+	{
+		return reinterpret_cast<char*>(&filePtr.LoadBMD());
+	}
 };
 
 struct ModelAnim : public Model, Animation	//internal: ModelAnm
@@ -353,7 +527,7 @@ struct ShadowModel : public ModelBase	//internal: ShadowModel; done
 	bool InitCuboid();
 
 	// May only have 2 params, but then it wouldn't match ModelBase's declaration
-	virtual bool DoSetFile(char* file, int arg1, int arg2) override;
+	virtual bool DoSetFile(BMD_File& file, bool enableFog = false, int polygonID = -1) override;
 
 	// The opacity is from 0 to 30
 	void InitModel(Matrix4x3* transform, Fix12i scaleX, Fix12i scaleY, Fix12i scaleZ, unsigned opacity);
@@ -366,15 +540,19 @@ struct ShadowModel : public ModelBase	//internal: ShadowModel; done
 
 struct CommonModel : public ModelBase	//internal: CommonModel; done
 {
-	unsigned unkPtr;
+	ModelComponents* data;
+	Matrix4x3 mat4x3;
 
 	CommonModel();
 	virtual ~CommonModel();
-	virtual bool DoSetFile(char* file, int arg1, int arg2) override;
+	virtual bool DoSetFile(BMD_File& file, bool enableFog = false, int polygonID = -1) override;
 
 	void Func_0201609C(unsigned arg0);
-	void Func_020160AC(unsigned arg0);
-	void Func_02016104(unsigned arg0);
+	void Func_020160AC(unsigned arg0, unsigned arg1);
+	void Render(const Vector3* scale = nullptr);
+
+	void Render(const Vector3& scale) { Render(&scale); }
+	void Render(Fix12i scale) { Render({scale, scale, scale}); }
 };
 
 
@@ -389,7 +567,7 @@ struct BlendModelAnim : public ModelAnim	//internal: BlendAnmModel
 	BlendModelAnim();
 	virtual ~BlendModelAnim();
 
-	virtual bool DoSetFile(char* file, int arg1, int arg2) override;
+	virtual bool DoSetFile(BMD_File& file, bool enableFog = false, int polygonID = -1) override;
 	virtual void UpdateVerts() override;
 	virtual void Virtual10(Matrix4x3& arg0) override;
 	virtual void Render(const Vector3* scale = nullptr) override;

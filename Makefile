@@ -37,12 +37,14 @@ export LD      := $(PREFIX)ld
 TARGET   := newcode
 BUILD    := build
 SOURCES  := source
-INCLUDES := include
+INCLUDES := ../dynamic_lib/source ../source ..
 
-CFLAGS := -Wall -Wextra -Werror -Wno-unused-parameter \
-	-Wno-parentheses -Wno-volatile -Wno-invalid-offsetof\
-	-Os -march=armv5te -mtune=arm946e-s -fomit-frame-pointer -fwrapv \
-	$(INCLUDE) -DARM9 -nodefaultlibs -I. -fno-builtin -c
+ARCHFLAGS := -march=armv5te -mtune=arm946e-s
+
+CFLAGS := -Wall -Wextra -Werror -Wno-unused-parameter -Wno-narrowing \
+	-Wno-parentheses -Wno-volatile -Wno-invalid-offsetof -Wno-char-subscripts -Wno-trigraphs \
+	-Os $(ARCHFLAGS) -fomit-frame-pointer -fwrapv \
+	$(INCLUDE) -DARM9 -nodefaultlibs -fno-builtin -c
 
 CXXFLAGS := $(CFLAGS) -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -faligned-new=4
 
@@ -68,7 +70,7 @@ SFILES   := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 export OFILES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib) -L$(DEVKITARM)/lib/gcc/arm-none-eabi/11.1.0
 
-export INCLUDE := $(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
+export INCLUDE := $(foreach dir,$(INCLUDES),-iquote$(dir)) \
                   $(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
 
 .PHONY: $(BUILD) clean
@@ -117,7 +119,7 @@ $(OUTPUT).elf: $(OFILES)
 #---------------------------------------------------------------------------------
 %.o: %.s
 	@echo $(notdir $<)
-	$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d -x assembler-with-cpp -c $< -o $@ $(ERROR_FILTER)
+	$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d -x assembler-with-cpp $(ARCHFLAGS) -c $< -o $@ $(ERROR_FILTER)
 
 #---------------------------------------------------------------------------------
 
