@@ -5,6 +5,7 @@
 
 
 struct Player;
+struct Number;
 struct CylinderClsn;
 struct ShadowModel;
 
@@ -117,8 +118,11 @@ struct Actor : public ActorBase				//internal name: dActor
 		WRONG_AREA = 1 << 5,
 		GOING_TO_YOSHI_MOUTH = 1 << 17,
 		IN_YOSHI_MOUTH = 1 << 18,
+		BEHAVIOR_DURING_DIALOGUE = 1 << 23,
 		CAN_SQUISH = 1 << 25,
-		AIMABLE_BY_EGG = 1 << 28
+		BEHAVIOR_DURING_STAR_SPAWNING = 1 << 26,
+		AIMABLE_BY_EGG = 1 << 28,
+		BEHAVIOR_DURING_CUTSCENES = 1 << 29
 	};
 
 	struct ListNode
@@ -207,10 +211,9 @@ struct Actor : public ActorBase				//internal name: dActor
 	void PoofDust(); //calls the two above function
 
 	[[deprecated("seems to have a second parameter, don't use until fixed")]]
-	void UntrackStar();
+	void UntrackStar(char& starID);
 
-	// trackStarID seems to be an address
-	Actor* UntrackAndSpawnStar(unsigned trackStarID, unsigned starID, const Vector3& spawnPos, unsigned howToSpawnStar);
+	Actor* UntrackAndSpawnStar(char& trackStarID, unsigned starID, const Vector3& spawnPos, unsigned howToSpawnStar);
 	unsigned TrackStar(unsigned starID, unsigned starType); //starType=1: silver star, 2: star //returns star ID or 0xff if starID != STAR_ID
 
 	void Earthquake(const Vector3& source, Fix12i magnitude);
@@ -236,7 +239,7 @@ struct Actor : public ActorBase				//internal name: dActor
 	// You cannot afford to spawn a Super Mushroom if there are 0 uses of the model's SharedFilePtr and the player already went super.
 	// If you do, particle color glitches will happen!
 
-	Actor* SpawnNumber(const Vector3& pos, unsigned number, bool isRed, unsigned arg3, unsigned arg4);
+	Number* SpawnNumber(const Vector3& pos, unsigned number, bool isSilver, uint16_t unk14c, Actor* unkActor = nullptr);
 	static Actor* Spawn(unsigned actorID, unsigned param1, const Vector3& pos, const Vector3_16* rot = nullptr, int areaID = 0, int deathTableID = -1);
 	static Actor* Next(const Actor* actor); // next in the linked list. Returns the 1st object if given a nullptr. Returns a nullptr if given the last actor
 	static Actor* FindWithID(unsigned id);
@@ -346,6 +349,9 @@ struct SpawnInfo : BaseSpawnInfo
 };
 
 extern BaseSpawnInfo* (*ACTOR_SPAWN_INFO_TABLE_PTR)[];
+
+extern unsigned CURR_UPDATE_FLAGS;
+extern unsigned PREV_UPDATE_FLAGS; // anded with Actor::flags in Actor::BeforeBehavior
 
 // the pointer to Player's SpawnInfo2 is only read  in Actor::Actor after the first time
 

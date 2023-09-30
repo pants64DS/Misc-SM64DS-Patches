@@ -510,19 +510,19 @@ namespace Particle
 			unsigned lastUsedSysSlotIndex;
 			Data data[0x40];
 			Data* usedSystems[0x10];
-			unsigned unk750;
+			unsigned unk748;
 			Callback callbacks[0x08];
 			UnkStr2 unkStr2s[0x04];
-			unsigned* unk7f4;
+			unsigned* unk7ec;
+			unsigned* unk7f0;
+			Fix12i    unk7f4;
 			unsigned* unk7f8;
-			Fix12i unk7fc;
+			Fix12i    unk7fc;
 			unsigned* unk800;
-			Fix12i unk804;
+			unsigned  unk804;
 			unsigned* unk808;
-			unsigned unk80c;
+			unsigned  unk80c;
 			unsigned* unk810;
-			unsigned unk814;
-			unsigned* unk818;
 
 			Data* FindData(unsigned uniqueID) const;
 		};

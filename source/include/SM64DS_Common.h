@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <type_traits>
 #include <utility>
+#include <numeric>
 #include <limits>
 
 // Note: vector and matrix structures defined in this file use
@@ -44,8 +45,8 @@ struct Fix
 	using Promoted = CRTP<int>;
 
 	constexpr Fix() = default;
-	constexpr Fix(T val) : val(val << q) {}
-	constexpr Fix(T val, AsRaw) : val(val) {}
+	constexpr Fix(std::integral auto val) : val(val << q) {}
+	constexpr Fix(std::integral auto val, AsRaw) : val(val) {}
 	constexpr explicit Fix(long double val) : val(val * (1ll << q) + 0.5l) {}
 
 	template<FixUR U, int r, template<class> class CRTP2>
@@ -97,10 +98,10 @@ struct Fix
 		Promoted result;
 
 		asm(R"(
-			movs %[lo], %[lo], lsr %[s0]
-			adc  %[rs], %[lo], %[hi], lsl %[s1]
+			movs %[rs], %[lo], lsr %[s0]
+			adc  %[rs], %[rs], %[hi], lsl %[s1]
 		)":
-		[rs] "=r" (result) :
+		[rs] "=&r" (result) :
 		[lo] "r" (static_cast<uint32_t>(product)),
 		[hi] "r" (static_cast<uint32_t>(product >> 32)),
 		[s0] "I" (q),
@@ -127,15 +128,32 @@ struct Fix
 	template<FixUR U> friend constexpr
 	bool operator>=(CRTP<T> f0, CRTP<U> f1) { return f0.val >= f1.val; }
 
-
 	static constexpr CRTP<T> max {std::numeric_limits<T>::max(), as_raw};
 	static constexpr CRTP<T> min {std::numeric_limits<T>::min(), as_raw};
 
-	constexpr Promoted friend Abs(CRTP<T> f) { return f.val >= 0 ? f : -f; }
+	constexpr Promoted friend Abs(CRTP<T> f) { return f.val >= 0 ? +f : -f; }
 	constexpr explicit operator T() const { return val >> q; }
 	constexpr explicit operator bool() const { return val != 0; }
 
 	bool ApproachLinear(Promoted dest, Promoted step) & { return ::ApproachLinear(val, dest.val, step.val); }
+
+	template<FixUR U> friend constexpr
+	Promoted Midpoint(CRTP<T> f0, CRTP<U> f1)
+	{
+		return {std::midpoint<int>(f0.val, f1.val), as_raw};
+	}
+
+	static constexpr CRTP<T> pi = []
+	{
+		const int shift = 8 * static_cast<int>(sizeof(T)) - q;
+
+		int64_t raw = 0x3243f6a89ll;
+
+		if (q < 32)
+			raw += 1 << (31 - q);
+
+		return CRTP<T> {raw >> shift, as_raw};
+	}();
 };
 
 template<FixUR T>
@@ -226,7 +244,8 @@ extern "C"
 	void FreeHeapAllocation(void* ptr, unsigned* heapPtr);
 	void* AllocateFileSpace(unsigned amount);
 	
-	short AngleDiff(short ang0, short ang1) __attribute__((const));
+	int ApproachAngle(short& angle, short targetAngle, int invFactor, int maxDelta = 180_deg, int minDelta = 0);
+	uint16_t AngleDiff(short ang0, short ang1) __attribute__((const));
 	void Vec3_RotateYAndTranslate(Vector3& res, const Vector3& translation, short angY, const Vector3& v); //res and v cannot alias.
 	short Vec3_VertAngle(const Vector3& v1, const Vector3& v0) __attribute__((pure));
 	short Vec3_HorzAngle(const Vector3& v0, const Vector3& v1) __attribute__((pure));
@@ -252,8 +271,8 @@ extern "C"
 	void Vec3_DivScalarInPlace(Vector3& v, Fix12i scalar);
 	void Vec3_MulScalarInPlace(Vector3& v, Fix12i scalar);
 	void Vec3_MulScalar(Vector3& res, const Vector3& v, Fix12i scalar);
-	void Vec3_Sub(Vector3& res, const Vector3& v0, const Vector3& v1); // not as efficient as AddVec3
-	void Vec3_Add(Vector3& res, const Vector3& v0, const Vector3& v1); // not as efficient as SubVec3
+	void Vec3_Sub(Vector3& res, const Vector3& v0, const Vector3& v1); // not as efficient as SubVec3
+	void Vec3_Add(Vector3& res, const Vector3& v0, const Vector3& v1); // not as efficient as AddVec3
 	
 	void Matrix3x3_LoadIdentity(Matrix3x3& mF);
 	void MulVec3Mat3x3(const Vector3& v, const Matrix3x3& m, Vector3& res);
@@ -283,10 +302,33 @@ extern "C"
 
 inline int RandomInt() { return RandomIntInternal(&RNG_STATE); }
 
-struct Vector2     { Fix12i x, y; };
-struct Vector2_16  { short  x, y; };
-struct Vector3_16  { short  x, y, z; };
-struct Vector3_16f { Fix12s x, y, z; };
+struct Vector2
+{
+	Fix12i x, y;
+
+	constexpr bool operator==(const Vector2&) const = default;
+};
+
+struct Vector2_16
+{
+	short x, y;
+
+	constexpr bool operator==(const Vector2_16&) const = default;
+};
+
+struct Vector3_16
+{
+	short x, y, z;
+
+	constexpr bool operator==(const Vector3_16&) const = default;
+};
+
+struct Vector3_16f
+{
+	Fix12s x, y, z;
+
+	constexpr bool operator==(const Vector3_16f&) const = default;
+};
 
 template<class T>
 struct UnaliasedRef
@@ -325,6 +367,12 @@ constexpr T& AssureUnaliased(T& t) { return t; }
 constexpr int Lerp(int a, int b, Fix12i t)
 {
 	return static_cast<int>(t * (b - a)) + a;
+}
+
+[[nodiscard]]
+inline Fix12i Lerp(Fix12i a, Fix12i b, Fix12i t)
+{
+	return t * (b - a) + a;
 }
 
 struct Vector3
@@ -513,6 +561,20 @@ struct Vector3
 				Eval<resMayAlias>(res);
 				res >>= shift;
 			});
+		}
+
+		constexpr explicit operator Vector3_16f() &&
+		{
+			Vector3 res;
+			Eval<false>(res);
+			return static_cast<Vector3_16f>(res);
+		}
+
+		constexpr explicit operator Vector3_16() &&
+		{
+			Vector3 res;
+			Eval<false>(res);
+			return static_cast<Vector3_16>(res);
 		}
 	};
 
@@ -805,6 +867,21 @@ struct Vector3
 	{
 		return *this = Lerp(pivot, *this, rotator);
 	}
+
+	constexpr explicit operator Vector3_16f() const
+	{
+		return {x, y, z};
+	}
+
+	constexpr explicit operator Vector3_16() const
+	{
+		return
+		{
+			static_cast<short>(static_cast<int>(x)),
+			static_cast<short>(static_cast<int>(y)),
+			static_cast<short>(static_cast<int>(z))
+		};
+	}
 };
 
 [[gnu::always_inline, nodiscard]]
@@ -1012,6 +1089,8 @@ struct Matrix3x3 // Matrix is column-major!
 	{
 		return operator()(std::forward<T>(x));
 	}
+
+	Matrix3x3& operator*=(const auto& m) & { return *this = m * *this; }
 	
 	class TransposeProxy
 	{
@@ -1342,6 +1421,8 @@ struct Matrix4x3 : private Matrix3x3 // Matrix is column-major!
 		return operator()(std::forward<T>(x));
 	}
 
+	Matrix4x3& operator*=(const auto& m) & { return *this = m * *this; }
+
 	[[gnu::always_inline, nodiscard]]
 	static auto Identity()
 	{
@@ -1384,6 +1465,15 @@ struct Matrix4x3 : private Matrix3x3 // Matrix is column-major!
 		return Proxy([&scale]<bool resMayAlias> [[gnu::always_inline]] (Matrix4x3& res)
 		{
 			Matrix4x3_FromScale(res, scale.x, scale.y, scale.z);
+		});
+	}
+
+	[[gnu::always_inline, nodiscard]]
+	static auto Scale(const Fix12i& scale)
+	{
+		return Proxy([&scale]<bool resMayAlias> [[gnu::always_inline]] (Matrix4x3& res)
+		{
+			Matrix4x3_FromScale(res, scale, scale, scale);
 		});
 	}
 
@@ -1432,6 +1522,24 @@ struct Matrix4x3 : private Matrix3x3 // Matrix is column-major!
 		});
 	}
 
+	[[gnu::always_inline, nodiscard]]
+	static auto RotationZXY(const Vector3_16& angle)
+	{
+		return Proxy([&angle]<bool resMayAlias> [[gnu::always_inline]] (Matrix4x3& res)
+		{
+			Matrix4x3_FromRotationZXYExt(res, angle.x, angle.y, angle.z);
+		});
+	}
+	
+	[[gnu::always_inline, nodiscard]]
+	static auto RotationXYZ(const Vector3_16& angle)
+	{
+		return Proxy([&angle]<bool resMayAlias> [[gnu::always_inline]] (Matrix4x3& res)
+		{
+			Matrix4x3_FromRotationXYZExt(res, angle.x, angle.y, angle.z);
+		});
+	}
+
 	template<class C0, class C1, class C2, class C3> [[gnu::always_inline, nodiscard]]
 	static auto Temp(C0&& c0, C1&& c1, C2&& c2, C3&& c3)
 	{
@@ -1455,6 +1563,9 @@ struct Matrix4x3 : private Matrix3x3 // Matrix is column-major!
 	}
 };
 
+struct BMD_File;
+struct KCL_File;
+
 struct SharedFilePtr
 {
 	uint16_t fileID = ~0;
@@ -1469,18 +1580,29 @@ struct SharedFilePtr
 		static consteval IDs Get(const char* name);
 	};
 
+	consteval SharedFilePtr() = default;
 	consteval SharedFilePtr(const SharedFilePtr&) = default;
 	consteval SharedFilePtr(uint16_t fileID) : fileID(fileID) {}
 	consteval SharedFilePtr(const std::same_as<char> auto* name):
 		fileID(IDs::Get(name).fileID) {}
 	
-	SharedFilePtr& FromOv0ID(unsigned ov0FileID);
+	void FromOv0ID(unsigned ov0FileID);
 
 	[[deprecated("'Construct' has been renamed to 'FromOv0ID'")]]
-	SharedFilePtr& Construct(unsigned ov0FileID) { return FromOv0ID(ov0FileID); }
+	SharedFilePtr& Construct(unsigned ov0FileID)
+	{
+		return FromOv0ID(ov0FileID), *this;
+	}
 
+	// Loads the file if numRefs == 0, and increments it unless loading failed
+	// With previous headers this had a different address (02017c54) that just loaded the file
 	char* Load();
+
+	// Decrements numRefs and unloads the file when it reaches zero
 	void Release();
+
+	BMD_File& LoadBMD();
+	KCL_File& LoadKCL();
 };
 
 template<class T, T zero = static_cast<T>(0)>
@@ -1534,6 +1656,14 @@ inline const ostream& operator<<(const ostream& os, Fix12<T> fix)
 inline const ostream& operator<<(const ostream& os, const Vector3& vec)
 {
 	os.set_buffer("{0x%r0%_f, 0x%r1%_f, 0x%r2%_f}");
+	os.flush(vec.x.val, vec.y.val, vec.z.val);
+
+	return os;
+}
+
+inline const ostream& operator<<(const ostream& os, const Vector3_16f& vec)
+{
+	os.set_buffer("{0x%r0%_fs, 0x%r1%_fs, 0x%r2%_fs}");
 	os.flush(vec.x.val, vec.y.val, vec.z.val);
 
 	return os;

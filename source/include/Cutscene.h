@@ -15,13 +15,8 @@ extern "C"
 	bool RunKuppaScript(char* address);
 	void EndKuppaScript();
 
-	struct
-	{
-		// the return value is usually 1
-		int (*func)(Camera& cam, char* params, short minFrame, short maxFrame);
-		unsigned unk04;
-	}
-	extern KS_CAMERA_FUNCTIONS[39];
+	// The return value is usually 1
+	extern int (Camera::* KS_CAMERA_FUNCTIONS[39])(char* params, short minFrame, short maxFrame);
 
 	extern unsigned KS_FRAME_COUNTER;
 	extern char* RUNNING_KUPPA_SCRIPT; // nullptr if no script is running
@@ -40,30 +35,17 @@ using enum CharacterID;
 namespace KuppaScriptImpl { template<std::size_t scriptSize = 0> class Builder; }
 
 template<std::size_t size = 0>
-class KuppaScript
+struct KuppaScript
 {
 	std::array<char, size> data;
-
-	friend class KuppaScriptImpl::Builder<size - 1>;
 
 	consteval explicit KuppaScript(const decltype(data)& data) requires(size > 0):
 		data(data)
 	{}
 
-public:
 	bool Run() & requires(size > 0) { return RunKuppaScript(data.data()); }
 
 	static void Stop() { EndKuppaScript(); }
-
-	static constexpr std::size_t Size() { return size; }
-
-	constexpr const char* Data() const requires(size > 0) { return data.data(); }
-	constexpr       char* Data()       requires(size > 0) { return data.data(); }
-
-	constexpr auto begin()       { return data.begin(); }
-	constexpr auto begin() const { return data.begin(); }
-	constexpr auto end()         { return data.end();   }
-	constexpr auto end()   const { return data.end();   }
 };
 
 consteval KuppaScriptImpl::Builder<> NewScript();
@@ -446,9 +428,9 @@ public:
 	}
 
 	// Change music
-	consteval auto ChangeMusic(unsigned NewMusicID) const
+	consteval auto ChangeMusic(unsigned musicID) const
 	{
-		return Instruction<7>(ToByteArray(NewMusicID));
+		return Instruction<7>(ToByteArray(musicID));
 	}
 
 	// Play sound from SSAR 1 (player voices). [].
@@ -623,6 +605,28 @@ public:
 	consteval auto KillPlayer() const
 	{
 		return PlayerInstruction<character, 13>();
+	}
+
+	// --- Custom Instructions ---
+
+	consteval auto CubicInterpCamPos(Vector3_16 dest) const
+	{
+		return CamInstruction<31>(ToByteArray(dest));
+	}
+
+	consteval auto CubicInterpCamPos(short dx, short dy, short dz) const
+	{
+		return CubicInterpCamPos(Vector3_16{dx, dy, dz});
+	}
+
+	consteval auto CubicInterpCamTarget(Vector3_16 dest) const
+	{
+		return CamInstruction<32>(ToByteArray(dest));
+	}
+
+	consteval auto CubicInterpCamTarget(short dx, short dy, short dz) const
+	{
+		return CubicInterpCamTarget(Vector3_16{dx, dy, dz});
 	}
 };
 

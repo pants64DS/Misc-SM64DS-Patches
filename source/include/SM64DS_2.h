@@ -186,9 +186,16 @@ struct Platform : public Actor
 	bool UpdateKillByMegaChar(short rotSpeedX, short rotSpeedY, short rotSpeedZ, Fix12i speed); //true if killed by mega char
 	void UpdateClsnPosAndRot(); //make sure the mesh collider is at 0x124 first! Also, call this after updating the model's matrix
 	void UpdateModelPosAndRotY(); //make sure the model is at 0x0d4 first!
-	bool IsClsnInRange(Fix12i clsnRange, Fix12i clsnRangeOffsetY); //both in fixed-point 20.12 //side effect: enables collision if and only if in range
-	bool IsClsnInRangeOnScreen(Fix12i clsnRange, Fix12i clsnRangeOffsetY); //if offsetY is 0, it is loaded from +0xb4.
-	
+
+	// enables collision if in range, and disables it otherwise
+	// if clsnRange        == 0._f, Actor::rangeAsr3 << 3 is used instead
+	// if clsnRangeOffsetY == 0._f, Actor::rangeOffsetY   is used instead
+	bool IsClsnInRange(Fix12i clsnRange = 0._f, Fix12i clsnRangeOffsetY = 0._f);
+
+	// enables collision if on screen and in range, or if on screen and clsnRange == 0._f
+	// disables the collision otherwise
+	// if clsnRangeOffsetY == 0._f, Actor::rangeOffsetY is used instead
+	bool IsClsnInRangeOnScreen(Fix12i clsnRange = 0._f, Fix12i clsnRangeOffsetY = 0._f);
 };
 
 static_assert(sizeof(MovingMeshCollider) > 0xe4);
@@ -277,6 +284,7 @@ struct Camera : public View // internal name: dCamera
 
 	enum Flags
 	{
+		UNDERWATER = 1 << 0,
 		ZOOMED_OUT = 1 << 2,
 		BOSS_TALK = 1 << 3,
 		ROTATING_LEFT = 1 << 5,
@@ -296,7 +304,7 @@ struct Camera : public View // internal name: dCamera
 	Vector3 lookAt;
 	Vector3 pos;            // 0x8C
 	Vector3 ownerPos;       // 0x98
-	Vector3 unk0a4;
+	Vector3 lookAtOffset;   // An offset from ownerPos to lookAt
 	Vector3 savedLookAt;    // Saved to at talk
 	Vector3 savedPos;       // Saved to at talk
 	Vector3 unk0c8;         // Player's front lookAt?
@@ -628,93 +636,74 @@ struct Player : public Actor
 		bool(Player::* init)();
 		bool(Player::* main)();
 		bool(Player::* cleanup)();
-	};
-	enum States
-	{
-		ST_LEDGE_GRAB         = 0x02110004,
-		ST_CEILING_GRATE      = 0x0211001c,
-		ST_YOSHI_POWER        = 0x02110034, //tongue, spitting, throwing egg, breathing fire
-		ST_SWALLOW            = 0x0211004c,
-		
-		
-		ST_HURT               = 0x02110094,
-		ST_HURT_WATER         = 0x021100ac,
-		ST_ELECTROCUTE        = 0x021100c4,
-		ST_BURN_FIRE          = 0x021100dc,
-		ST_BURN_LAVA          = 0x021100f4,
-		ST_DEAD_HIT           = 0x0211010c,
-		ST_DEAD_PIT           = 0x02110124,
-		ST_WALK               = 0x0211013c,
-		ST_WAIT               = 0x02110154,
-		ST_GRABBED            = 0x0211016c,
-		ST_TURN_AROUND        = 0x02110184,
-		ST_JUMP               = 0x0211019c,
-		ST_FALL               = 0x021101b4,
-		ST_THROWN             = 0x021101cc,
-		ST_SIDE_FLIP          = 0x021101e4,
-		ST_SLIDE_KICK_RECOVER = 0x021101fc,
-		ST_FLY                = 0x02110214,
-		ST_NO_CONTROL         = 0x0211022c, //includes caps
-		ST_OWL                = 0x02110244,
-		
-		ST_WIND_CARRY         = 0x02110274,
-		ST_BALLOON            = 0x0211028c,
-		ST_TELEPORT           = 0x021102a4,
-		
-		ST_CANNON             = 0x021102d4,
-		ST_SQUISH             = 0x021102ec,
-		ST_SHELL              = 0x02110304,
-		ST_STOMACH_SLIDE      = 0x0211031c,
-		ST_BUTT_SLIDE         = 0x02110334,
-		ST_DIZZY_STARS        = 0x0211034c,
-		ST_HOLD_LIGHT         = 0x02110364,
-		ST_BONK               = 0x0211037c,
-		ST_HOLD_HEAVY         = 0x02110394,
-		ST_WALL_SLIDE         = 0x021103ac,
-		
-		ST_WALL_JUMP          = 0x021103dc,
-		ST_SLOPE_JUMP         = 0x021103f4,
-		ST_STUCK_IN_GROUND    = 0x0211040c,
-		ST_LAND               = 0x02110424,
-		ST_ON_WALL            = 0x0211043c,
-		ST_SPIN               = 0x02110454,
-		ST_TALK		          = 0x0211046c,
-		ST_CRAZED_CRATE       = 0x02110484,
-		
-		ST_LEVEL_ENTER        = 0x021104b4,
-		
-		ST_CROUCH             = 0x021104e4,
-		
-		ST_CRAWL              = 0x02110514,
-		ST_BACK_FLIP          = 0x0211052c,
-		
-		ST_LONG_JUMP          = 0x0211055c,
-		ST_PUNCH_KICK         = 0x02110574,
-		
-		ST_GROUND_POUND       = 0x021105a4,
-		ST_DIVE               = 0x021105bc,
-		ST_THROW              = 0x021105d4,
-		ST_BOWSER_SPIN        = 0x021105ec,
-		
-		
-		ST_SLIDE_KICK         = 0x02110634,
-		ST_FIRST_PERSON       = 0x0211064c,
-		
-		ST_SWIM               = 0x0211067c,
-		ST_WATER_JUMP         = 0x02110694,
-		ST_METAL_WATER_GROUND = 0x021106ac,
-		ST_METAL_WATER_WATER  = 0x021106c4,
-		ST_CLIMB              = 0x021106dc,
-		ST_HEADSTAND          = 0x021106f4,
-		ST_POLE_JUMP          = 0x0211070c,
-		ST_HEADSTAND_JUMP     = 0x02110724,
-		
-		
-		
-		
-		ST_LAUNCH_STAR        = 0x0211079c
-	};
-	
+	}
+	static ST_LEDGE_GRAB,
+	       ST_CEILING_GRATE,
+	       ST_YOSHI_POWER, // tongue, spitting, throwing egg, breathing fire
+	       ST_SWALLOW,
+	       ST_HURT,
+	       ST_HURT_WATER,
+	       ST_ELECTROCUTE,
+	       ST_BURN_FIRE,
+	       ST_BURN_LAVA,
+	       ST_DEAD_HIT,
+	       ST_DEAD_PIT,
+	       ST_WALK,
+	       ST_WAIT,
+	       ST_GRABBED,
+	       ST_TURN_AROUND,
+	       ST_JUMP,
+	       ST_FALL,
+	       ST_THROWN,
+	       ST_SIDE_FLIP,
+	       ST_SLIDE_KICK_RECOVER,
+	       ST_FLY,
+	       ST_NO_CONTROL, // includes caps
+	       ST_OWL,
+	       ST_WIND_CARRY,
+	       ST_BALLOON,
+	       ST_TELEPORT,
+	       ST_CANNON,
+	       ST_SQUISH,
+	       ST_SHELL,
+	       ST_STOMACH_SLIDE,
+	       ST_BUTT_SLIDE,
+	       ST_DIZZY_STARS,
+	       ST_HOLD_LIGHT,
+	       ST_BONK,
+	       ST_HOLD_HEAVY,
+	       ST_WALL_SLIDE,
+	       ST_WALL_JUMP,
+	       ST_SLOPE_JUMP,
+	       ST_STUCK_IN_GROUND,
+	       ST_LAND,
+	       ST_ON_WALL,
+	       ST_SPIN,
+	       ST_TALK,
+	       ST_CRAZED_CRATE,
+	       ST_LEVEL_ENTER,
+	       ST_CROUCH,
+	       ST_CRAWL,
+	       ST_BACK_FLIP,
+	       ST_LONG_JUMP,
+	       ST_PUNCH_KICK,
+	       ST_GROUND_POUND,
+	       ST_DIVE,
+	       ST_THROW,
+	       ST_BOWSER_SPIN,
+	       ST_SLIDE_KICK,
+	       ST_FIRST_PERSON,
+	       ST_SWIM,
+	       ST_WATER_JUMP,
+	       ST_METAL_WATER_GROUND,
+	       ST_METAL_WATER_WATER,
+	       ST_CLIMB,
+	       ST_HEADSTAND,
+	       ST_POLE_JUMP,
+	       ST_HEADSTAND_JUMP,
+	       ST_LAUNCH_STAR;
+
+
 	enum TalkStates
 	{
 		TK_NOT = -1,
@@ -832,20 +821,16 @@ struct Player : public Actor
 	unsigned unk67c;
 	unsigned unk680;
 	Fix12i jumpPeakHeight; // 0x684
-	unsigned msgID;
+	union { unsigned msgID; Fix12i yPosOnPole; /* zero at the bottom of the pole */ };
 	unsigned unk68c;
 	unsigned unk690;
 	unsigned unk694;
 	unsigned unk698;
-	short bowserSpinSpeed;
+	short spinningAngularVelY; // used for at least turning on poles and spinning Bowser
 	uint16_t unk69e;
 	uint16_t visibilityCounter; // the player is visible when this is even (except when the player is electrocuted the second bit is checked instead)
 	uint16_t unk6a2;
-	union
-	{
-		unsigned sleepTimer;
-		unsigned runChargeTimer;
-	};
+	unsigned stateTimer; // sleep, run charge, etc.
 	unsigned unk6a8;
 	uint16_t unk6ac;
 	uint16_t featherCapTimeRemaining; // 0x6AE
@@ -929,8 +914,9 @@ struct Player : public Actor
 	uint16_t unk75c;
 	short spineAngleOffsY; // is added to bodyModels[GetBodyModelID(param1 & 0xff, false)]->data.bones[8].rot.y
 	short spineAngleOffsZ; // is added to bodyModels[GetBodyModelID(param1 & 0xff, false)]->data.bones[8].rot.z
-	uint16_t unk762;
-	LaunchStar* lsPtr; //0x764
+	uint8_t lsState0Timer; // 0x762
+	uint8_t launchState;   // 0x763
+	LaunchStar* lsPtr;     // 0x764
 	
 	static SharedFilePtr* ANIM_PTRS[0x308];
 
@@ -957,6 +943,7 @@ struct Player : public Actor
 	bool Unk_020bea94();
 	unsigned GetBodyModelID(unsigned character, bool checkMetalStateInsteadOfWhetherUsingModel) const;
 	void SetAnim(unsigned animID, int flags, Fix12i animSpeed, unsigned startFrame);
+	void UpdateAnim();
 	bool ShowMessage(ActorBase& speaker, unsigned msgIndex, const Vector3& lookAt, unsigned arg3, unsigned arg4);
 	bool StartTalk(ActorBase& speaker, bool noButtonNeeded); //true iff the talk actually started.
 	int GetTalkState();
@@ -972,7 +959,7 @@ struct Player : public Actor
 
 	bool IsWarping() const
 	{
-		return reinterpret_cast<unsigned>(currState) == Player::ST_NO_CONTROL && stateState == 6;
+		return currState == &ST_NO_CONTROL && stateState == 6;
 	}
 };
 
@@ -1191,6 +1178,7 @@ extern "C"
 	extern ttcClock TTC_CLOCK_SETTING;
 	extern char LEVEL_ID;
 	extern char NEXT_LEVEL_ID;
+	extern char AREA_ID;
 	extern char STAR_ID;
 	extern uint8_t MAP_TILE_ARR_SIZE;
 	extern char NUM_LIVES;

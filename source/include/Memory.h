@@ -1,6 +1,7 @@
 #ifndef SM64DS_MEMORY_INCLUDED
 #define SM64DS_MEMORY_INCLUDED
 
+#include "SM64DS_Common.h"
 
 //WARNING: Only use these objects if you REALLY know what you're doing. Heap management in SM64DS is VERY unstable when using functions outside of their respective safe scopes.
 //WARNING: You should NEVER touch HeapAllocator functions when hacking. Those are used internally to manage the memory and represent the low level management of the heap. 
@@ -159,7 +160,7 @@ struct ExpandingHeapAllocator : public HeapAllocator
 	static MemoryNode* CreateNode(MemoryNode::Target* target, uint16_t nodeType);							//Sets up a new node at target.start, zeroes it and stores the block size in it. Returns a pointer to the newly created node.
 	static void* AllocateNode(MemoryNode* freeNodePair, MemoryNode* freeNode, void* address, unsigned size, unsigned direction);	//Allocates size bytes at address (and zeroes it) inside freeNode, fixes node links and returns a ptr to the data of the new node after setup
 	static bool FreeNode(MemoryNode* freeNodePair, MemoryNode::Target* target);								//Frees the node and merges free blocks. Returns 1 if deallocation has been successful, 0 otherwise.
-	static unsigned SizeofInternal(void* ptr);																//Returns the allocated size of a generic pointer to an allocated memory block
+	static unsigned SizeofInternal(const void* ptr);																//Returns the allocated size of a generic pointer to an allocated memory block
 	static void InvokeDeallocate(void* ptr, ExpandingHeapAllocator* allocator, unsigned tmp);				//Translates to allocator->Deallocate(ptr). tmp is used in order to swap the registers since this function acts as a thunk for Deallocate.
 
 	ExpandingHeapAllocator(void* heapEnd, unsigned flags);
@@ -232,7 +233,7 @@ struct Heap								//internal name: mHeap::Heap_t
 	virtual bool VIntact() = 0;												//Returns 1 if the heap represents a valid object. Not very reliable to check if the heap is broken...
 	virtual void VRescue() = 0;												//Does nothing.
 	virtual unsigned VReallocate(void* ptr, unsigned newSize) = 0;			//Reallocates the memory given by ptr with the size of newSize. Returns 0 in case the reallocation failed.
-	virtual unsigned VSizeof(void* ptr) = 0;								//Returns the size of an allocated block
+	virtual unsigned VSizeof(const void* ptr) = 0;							//Returns the size of an allocated block
 	virtual unsigned VMaxAllocationUnitSize() = 0;							//Returns the maximum size that is allocatable at once
 	virtual unsigned VMaxAllocatableSize() = 0;								//Returns the size of the largest contiguous free memory block
 	virtual unsigned VMemoryLeft() = 0;										//Returns the number of unallocated bytes
@@ -250,8 +251,8 @@ struct Heap								//internal name: mHeap::Heap_t
 	bool Intact();															//Calls VIntact and sets heapDamaged
 	void Rescue();															//Calls VRescue
 	unsigned Reallocate(void* ptr, unsigned newSize);						//Calls VReallocate
-	unsigned Sizeof(void* ptr);												//Calls VSizeof
-	unsigned _Sizeof(void* ptr);											//Calls Sizeof (thunk to Sizeof)
+	unsigned Sizeof(const void* ptr);												//Calls VSizeof
+	unsigned _Sizeof(const void* ptr);											//Calls Sizeof (thunk to Sizeof)
 	unsigned MaxAllocationUnitSize();										//Calls VMaxAllocationUnitSize
 	unsigned SetNodeID(unsigned id);										//Calls VSetNodeID
 	unsigned ResizeToFit();													//Calls VResizeToFit
@@ -276,7 +277,7 @@ struct ExpandingHeap : public Heap		//internal name: mHeap::ExpHeap_t
 	virtual bool VIntact() override;
 	virtual void VRescue() override;
 	virtual unsigned VReallocate(void* ptr, unsigned newSize) override;
-	virtual unsigned VSizeof(void* ptr) override;
+	virtual unsigned VSizeof(const void* ptr) override;
 	virtual unsigned VMaxAllocationUnitSize() override;						//Calls ExpandingHeapAllocator::MaxAllocatableSize()
 	virtual unsigned VMaxAllocatableSize() override;
 	virtual unsigned VMemoryLeft() override;
@@ -302,7 +303,7 @@ struct SolidHeap : public Heap			//internal name: mHeap::SolidHeap_t
 	virtual bool VIntact() override;
 	virtual void VRescue() override;
 	virtual unsigned VReallocate(void* ptr, unsigned newSize) override;		//Only allowed if ptr was the last allocation
-	virtual unsigned VSizeof(void* ptr) override;							//Crashes and returns -1
+	virtual unsigned VSizeof(const void* ptr) override;							//Crashes and returns -1
 	virtual unsigned VMaxAllocationUnitSize() override;						//Calls SolidHeapAllocator::MemoryLeft()
 	virtual unsigned VMaxAllocatableSize() override;						//Calls SolidHeapAllocator::MemoryLeft()
 	virtual unsigned VMemoryLeft() override;
@@ -331,6 +332,7 @@ namespace Memory
 	extern NestedHeapIterator rootHeapIterator;	//Iterator containing the root heap
 	extern void* nextRootHeapStart;				//Pointer to the next heap start (mirrored from 0x027x)
 	extern void* rootHeapEnd;					//Pointer to the root heap end (mirrored from 0x027x)
+	extern SolidHeapAllocator** soundHeapAllocatorPtrPtr;
 
 	//Calls to Heap::Allocate(size, align)
 	void* Allocate(unsigned size, int align, Heap* heap);				//Basic Allocate, if heap = 0 the default heap is used

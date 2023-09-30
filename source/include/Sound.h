@@ -242,7 +242,7 @@ namespace Sound
 	void PlayBank3_2D(unsigned soundID);
 	
 	//volume goes up to 0x7f
-	bool PlayMsgSound(unsigned soundID, unsigned arg1, unsigned volume, Fix12i timeInv, bool starting); //return value: did it finish?
+	bool PlayMsgSound(unsigned soundID, unsigned bgmVolume, unsigned volume, Fix12i timeInv, bool starting); //return value: did it finish?
 	
 	void LoadAndSetMusic(unsigned musicID);
 	void StopLoadedMusic();
