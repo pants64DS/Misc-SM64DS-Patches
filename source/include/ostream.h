@@ -106,6 +106,20 @@ public:
 		}
 		return *this;
 	}
+
+	int update_sign(int val, std::size_t sign_index) const
+	{
+		if (val < 0)
+		{
+			buffer[sign_index] = '-';
+			return -val;
+		}
+		else
+		{
+			buffer[sign_index] = '+';
+			return val;
+		}
+	}
 }
 constexpr cout;
 
