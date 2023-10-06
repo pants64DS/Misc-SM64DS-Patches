@@ -1655,46 +1655,72 @@ inline const ostream& operator<<(const ostream& os, Fix12<T> fix)
 
 inline const ostream& operator<<(const ostream& os, const Vector3& vec)
 {
-	os.set_buffer("{0x%r0%_f, 0x%r1%_f, 0x%r2%_f}");
-	os.flush(vec.x.val, vec.y.val, vec.z.val);
+	os.set_buffer("{+0x%r0%_f, +0x%r1%_f, +0x%r2%_f}");
+
+	os.flush(
+		os.update_sign(vec.x.val, 1),
+		os.update_sign(vec.y.val, 12),
+		os.update_sign(vec.z.val, 23)
+	);
 
 	return os;
 }
 
 inline const ostream& operator<<(const ostream& os, const Vector3_16f& vec)
 {
-	os.set_buffer("{0x%r0%_fs, 0x%r1%_fs, 0x%r2%_fs}");
-	os.flush(vec.x.val, vec.y.val, vec.z.val);
+	os.set_buffer("{+0x%r0%_fs, +0x%r1%_fs, +0x%r2%_fs}");
+
+	os.flush(
+		os.update_sign(vec.x.val, 1),
+		os.update_sign(vec.y.val, 13),
+		os.update_sign(vec.z.val, 25)
+	);
 
 	return os;
 }
 
 inline const ostream& operator<<(const ostream& os, const Vector3_16& vec)
 {
-	os.set_buffer("{0x%r0%, 0x%r1%, 0x%r2%}");
-	os.flush(vec.x, vec.y, vec.z);
+	os.set_buffer("{+0x%r0%, +0x%r1%, +0x%r2%}");
+
+	os.flush(
+		os.update_sign(vec.x, 1),
+		os.update_sign(vec.y, 10),
+		os.update_sign(vec.z, 19)
+	);
 
 	return os;
 }
 
 inline const ostream& operator<<(const ostream& os, const Matrix4x3& m)
 {
-	os.set_buffer("[ 0x%r0%_f  0x%r1%_f  0x%r2%_f  0x%r3%_f ]\n");
+	os.set_buffer("[ +0x%r0%_f +0x%r1%_f +0x%r2%_f +0x%r3%_f ]\n");
 
-	os.flush(m.c0.x.val, m.c1.x.val, m.c2.x.val, m.c3.x.val);
-	os.flush(m.c0.y.val, m.c1.y.val, m.c2.y.val, m.c3.y.val);
-	os.flush(m.c0.z.val, m.c1.z.val, m.c2.z.val, m.c3.z.val);
+	for (auto r : {&Vector3::x, &Vector3::y, &Vector3::z})
+	{
+		os.flush(
+			os.update_sign((m.c0.*r).val, 2),
+			os.update_sign((m.c1.*r).val, 12),
+			os.update_sign((m.c2.*r).val, 22),
+			os.update_sign((m.c3.*r).val, 32)
+		);
+	}
 
 	return os;
 }
 
 inline const ostream& operator<<(const ostream& os, const Matrix3x3& m)
 {
-	os.set_buffer("[ 0x%r0%_f  0x%r1%_f  0x%r2%_f ]\n");
+	os.set_buffer("[ +0x%r0%_f +0x%r1%_f +0x%r2%_f ]\n");
 
-	os.flush(m.c0.x.val, m.c1.x.val, m.c2.x.val);
-	os.flush(m.c0.y.val, m.c1.y.val, m.c2.y.val);
-	os.flush(m.c0.z.val, m.c1.z.val, m.c2.z.val);
+	for (auto r : {&Vector3::x, &Vector3::y, &Vector3::z})
+	{
+		os.flush(
+			os.update_sign((m.c0.*r).val, 2),
+			os.update_sign((m.c1.*r).val, 12),
+			os.update_sign((m.c2.*r).val, 22)
+		);
+	}
 
 	return os;
 }

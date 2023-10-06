@@ -74,7 +74,14 @@ struct MsgIDCharEntry
 };
 
 extern "C"
-{	
+{
+	extern uint8_t MSG_BOX_CURR_LEFT_X;
+	extern uint8_t MSG_BOX_CURR_TOP_Y;
+	extern uint8_t MSG_BOX_MIN_LEFT_X;
+	extern uint8_t MSG_BOX_MIN_TOP_Y;
+	extern uint8_t MSG_BOX_CENTER_X;
+	extern uint8_t MSG_BOX_CENTER_Y;
+
 	extern int MSG_LINE_HEIGHT;
 	extern int CURR_MSG_ID;
 	extern Message* CURR_MSG_PTR;

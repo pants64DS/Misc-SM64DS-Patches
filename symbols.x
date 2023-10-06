@@ -40,6 +40,13 @@ _ZN5Sound7FileRef5PTR_0E                                                        
 
 SAVE_DATA                                                                         = 0x0209caa0;
 
+MSG_BOX_CURR_TOP_Y                                                                = 0x0209d64c;
+MSG_BOX_MIN_LEFT_X                                                                = 0x0209d650;
+MSG_BOX_CURR_LEFT_X                                                               = 0x0209d658;
+MSG_BOX_CENTER_Y                                                                  = 0x0209d6c8;
+MSG_BOX_MIN_TOP_Y                                                                 = 0x0209d6cc;
+MSG_BOX_CENTER_X                                                                  = 0x0209d6d0;
+
 MSG_LINE_HEIGHT                                                                   = 0x0209d6a8;
 CURR_MSG_ID                                                                       = 0x0209d6d4;
 CURR_MSG_PTR                                                                      = 0x0209d6f0;
