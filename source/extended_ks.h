@@ -68,6 +68,12 @@ public:
 	}
 
 	template<CharacterID character>
+	consteval auto PlayLong(unsigned soundArchiveID, unsigned soundID) const
+	{
+		return PlayerInstruction<character, 19>(soundArchiveID, soundID);
+	}
+
+	template<CharacterID character>
 	consteval auto HurtPlayer(Vector3_16 source, unsigned damage = 0, Fix12i speed = 12._f, unsigned arg4 = 1, unsigned presetHurt = 0, unsigned spawnOuchParticles = 1) const
 	{
 		return PlayerInstruction<character, 20>(source, damage, speed, arg4, presetHurt, spawnOuchParticles);
@@ -89,12 +95,6 @@ public:
 	consteval auto BouncePlayer(Fix12i initVel) const
 	{
 		return PlayerInstruction<character, 23>(initVel);
-	}
-
-	template<CharacterID character>
-	consteval auto PlayLong(unsigned soundArchiveID, unsigned soundID) const
-	{
-		return PlayerInstruction<character, 19>(soundArchiveID, soundID);
 	}
 
 	template<CharacterID character>
