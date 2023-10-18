@@ -138,6 +138,7 @@ FEATHER_MODEL_PTR                                                               
 ENEMY_DEATH_FUNCS                                                                 = 0x0210dbc0;
 
 CHANGE_CAP_TOON_COLORS                                                            = 0x02110844;
+AMBIENT_SOUND_EFFECTS_ENABLED                                                     = 0x02110aec;
 
 CLPS_BLOCK_PTR                                                                    = 0x0214eb00;
 
@@ -611,6 +612,7 @@ _ZN5EnemyD2Ev                                                                   
 _ZN5EnemyC2Ev                                                                     = 0x020aed98;
 _ZN8CapEnemyD0Ev                                                                  = 0x020aedf4;
 
+_ZN6Player25RunKuppaScriptInstructionEPcss                                        = 0x020bd664;
 _ZN6Player16IncMegaKillCountEv                                                    = 0x020bdc58;
 _ZN6Player18SetNewHatCharacterEjjb                                                = 0x020be0f8;
 _ZN6Player16SetRealCharacterEj                                                    = 0x020be1e0;
@@ -804,6 +806,7 @@ _ZN6Camera6RenderEv                                                             
 _ZN6Camera9Virtual30Ev                                                            = 0x0200DA00;
 _ZN6CameraD0Ev                                                                    = 0x02007098;
 _ZN6CameraD1Ev                                                                    = 0x0200705C;
+_ZN6Camera25RunKuppaScriptInstructionEPcss                                        = 0x02008550;
 _ZN6CameraC1Ev                                                                    = 0x0200E444;
 _ZN6Camera25SaveCameraStateBeforeTalkEv                                           = 0x0200CC5C;
 
@@ -1061,6 +1064,7 @@ RUNNING_KUPPA_SCRIPT                                                            
 RunKuppaScript                                                                    = 0x0200ef04;
 EndKuppaScript                                                                    = 0x0200e798;
 ReadUnalignedShort                                                                = 0x0200e768;
+ReadUnalignedInt                                                                  = 0x0200e748;
 
 
 
@@ -1143,10 +1147,7 @@ _ZN6Player12ST_POLE_JUMPE          = 0x0211070c;
 _ZN6Player17ST_HEADSTAND_JUMPE     = 0x02110724;
 
 
-
-
-_ZN6Player14ST_LAUNCH_STARE        = 0x0211079c;
-
+KS_PLAYER_INSTRUCTIONS                                                            = 0x02110794;
 
 
 UNUSED_RAM                                                                        = 0x023C4000;
