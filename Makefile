@@ -46,7 +46,7 @@ CFLAGS := -Wall -Wextra -Werror -Wno-unused-parameter -Wno-narrowing \
 	-Os $(ARCHFLAGS) -fomit-frame-pointer -fwrapv \
 	$(INCLUDE) -DARM9 -nodefaultlibs -fno-builtin -c
 
-CXXFLAGS := $(CFLAGS) -std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics -faligned-new=4
+CXXFLAGS := $(CFLAGS) -std=c++23 -fno-exceptions -fno-rtti -fno-threadsafe-statics -faligned-new=4
 
 LDFLAGS =  -T $(CURDIR)/../symbols.x -T $(CURDIR)/../linker.x -Map $(TARGET).map
 

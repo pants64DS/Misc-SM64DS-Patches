@@ -375,6 +375,12 @@ inline Fix12i Lerp(Fix12i a, Fix12i b, Fix12i t)
 	return t * (b - a) + a;
 }
 
+[[nodiscard]]
+inline Fix12i SmoothStep(Fix12i t)
+{
+	return t * t * (3._f - (t << 1));
+}
+
 struct Vector3
 {
 	template<class F>

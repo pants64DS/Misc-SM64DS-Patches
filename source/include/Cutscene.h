@@ -5,18 +5,23 @@
 #include <cstdint>
 #include <concepts>
 #include <array>
-#include <tuple>
 #include <bit>
 
 class Camera;
+
+template<class T>
+using KS_MemberFuncPtr = int(T::*)(char* params, short minFrame, short maxFrame);
 
 extern "C"
 {
 	bool RunKuppaScript(char* address);
 	void EndKuppaScript();
 
-	// The return value is usually 1
-	extern int (Camera::* KS_CAMERA_FUNCTIONS[39])(char* params, short minFrame, short maxFrame);
+	// The array of player functions (resp. camera functions) is initialized when the first player
+	// instruction (resp. camera instruction) is run. Functions in both arrays usually return 1.
+
+	extern KS_MemberFuncPtr<Player> KS_PLAYER_FUNCTIONS[14];
+	extern KS_MemberFuncPtr<Camera> KS_CAMERA_FUNCTIONS[39];
 
 	extern unsigned KS_FRAME_COUNTER;
 	extern char* RUNNING_KUPPA_SCRIPT; // nullptr if no script is running
@@ -32,68 +37,71 @@ enum class CharacterID
 
 using enum CharacterID;
 
-namespace KuppaScriptImpl { template<std::size_t scriptSize = 0> class Builder; }
-
-template<std::size_t size = 0>
+template<std::size_t size> requires(size > 0)
 struct KuppaScript
 {
 	std::array<char, size> data;
 
-	consteval explicit KuppaScript(const decltype(data)& data) requires(size > 0):
+	consteval explicit KuppaScript(const decltype(data)& data):
 		data(data)
 	{}
 
-	bool Run() & requires(size > 0) { return RunKuppaScript(data.data()); }
+	constexpr       char* Raw()       { return data.data(); }
+	constexpr const char* Raw() const { return data.data(); }
+
+	bool Run() & { return RunKuppaScript(data.data()); }
 
 	static void Stop() { EndKuppaScript(); }
 };
-
-consteval KuppaScriptImpl::Builder<> NewScript();
 
 namespace KuppaScriptImpl {
 
 template<class T, std::size_t s1, std::size_t s2>
 consteval auto operator+(const std::array<T, s1>& a1, const std::array<T, s2>& a2)
 {
-	return std::apply([&](auto... e1)
-	{
-		return std::apply([&](auto... e2)
-		{
-			return std::to_array({e1..., e2...});
-		},
-		a2);
-	},
-	a1);
+	std::array<T, s1 + s2> res;
+
+	for (std::size_t i = 0; i < a1.size();++i)
+		res[i] = a1[i];
+
+	for (std::size_t i = 0; i < a2.size();++i)
+		res[a1.size() + i] = a2[i];
+
+	return res;
 }
 
-consteval auto ToByteArray(auto... args)
+consteval auto ToByteArray(const auto&... args)
 {
-	return (std::bit_cast<std::array<char, sizeof(args)>>(args) + ...);
+	if constexpr (sizeof...(args) == 0)
+		return std::array<char, 0> {};
+	else
+		return (std::bit_cast<std::array<char, sizeof(args)>>(args) + ...);
 }
 
-template<std::size_t scriptSize>
-class Builder
+template<template<std::size_t scriptSize> class DerivedCompiler, std::size_t scriptSize>
+class BaseScriptCompiler
 {
-	friend consteval Builder<>(::NewScript)();
+	std::array<char, scriptSize> precedingScript;
 
-	template<std::size_t numArgs>
-	struct PendingCommand
+public:
+	template<std::size_t paramListSize>
+	struct PendingInstruction
 	{
-		Builder oldBuilder;
-		uint8_t type;
-		std::array<char, numArgs> data;
+		uint8_t id;
+		std::array<char, scriptSize> precedingScript;
+		std::array<char, paramListSize> params;
 
-		static constexpr std::size_t newCommandSize = numArgs + 6;
-		static_assert(newCommandSize < 256, "A Kuppa Script command is too long");
+		static constexpr std::size_t size = 6 + paramListSize;
+		static_assert(size < 256, "A Kuppa Script command is too long");
 
 		consteval auto operator()(short minFrame, short maxFrame) const
 		{
-			return Builder<scriptSize + newCommandSize>
+			return DerivedCompiler<scriptSize + size>
 			{
-				oldBuilder.data
-				+ std::to_array<char>({newCommandSize, type})
+				precedingScript
+				+ std::to_array<char>({size, id})
 				+ ToByteArray(minFrame, maxFrame)
-				+ data
+				+ params
 			};
 		}
 
@@ -103,60 +111,39 @@ class Builder
 		}
 	};
 
-	consteval Builder() requires(scriptSize == 0) = default;
+	consteval BaseScriptCompiler() requires(scriptSize == 0) = default;
 
-public:
-	std::array<char, scriptSize> data;
-
-	consteval explicit Builder(const decltype(data)& data) requires(scriptSize > 0):
-		data(data)
+	consteval BaseScriptCompiler(const decltype(precedingScript)& precedingScript) requires(scriptSize > 0):
+		precedingScript(precedingScript)
 	{}
 
 	consteval auto End() const
 	{
-		return KuppaScript<scriptSize + 1>{data + std::to_array<char>({0})};
+		return KuppaScript<scriptSize + 1>{precedingScript + std::to_array<char>({0})};
 	}
 
-	template<uint8_t type>
-	consteval auto Instruction(auto... args) const -> PendingCommand<sizeof...(args)>
+	template<uint8_t id, class... Args>
+	consteval PendingInstruction<(sizeof(Args) + ... + 0)> Instruction(const Args&... args) const
 	{
-		return {*this, type, {args...}};
+		return {id, precedingScript, ToByteArray(args...)};
 	}
 
-	template<uint8_t type, std::size_t size>
-	consteval PendingCommand<size> Instruction(const std::array<char, size>& array) const
+	template<CharacterID character, uint8_t subID, class... Args>
+	consteval auto PlayerInstruction(const Args&... args) const
 	{
-		return {*this, type, array};
+		return Instruction<static_cast<uint8_t>(character)>(subID, args...);
 	}
 
-	template<CharacterID character, uint8_t function>
-	consteval auto PlayerInstruction(auto... args) const
+	template<uint8_t subID, class... Args>
+	consteval auto CamInstruction(const Args&... args) const
 	{
-		return Instruction<static_cast<uint8_t>(character)>(function, args...);
-	}
-
-	template<CharacterID character, uint8_t function, std::size_t size>
-	consteval auto PlayerInstruction(const std::array<char, size>& array) const
-	{
-		return Instruction<static_cast<uint8_t>(character)>(std::to_array<char>({function}) + array);
-	}
-
-	template<uint8_t function>
-	consteval auto CamInstruction(auto... args) const
-	{
-		return Instruction<4>(function, args...);
-	}
-
-	template<uint8_t function, std::size_t size>
-	consteval auto CamInstruction(std::array<char, size> array) const
-	{
-		return Instruction<4>(std::to_array<char>({function}) + array);
+		return Instruction<4>(subID, args...);
 	}
 
 	// Set camera target position (coordinates in fxu)
 	consteval auto SetCamTarget(Vector3_16 target) const
 	{
-		return CamInstruction<0>(ToByteArray(target));
+		return CamInstruction<0>(target);
 	}
 
 	consteval auto SetCamTarget(short x, short y, short z) const
@@ -167,7 +154,7 @@ public:
 	// Set camera position (coordinates in fxu)
 	consteval auto SetCamPos(Vector3_16 pos) const
 	{
-		return CamInstruction<1>(ToByteArray(pos));
+		return CamInstruction<1>(pos);
 	}
 
 	consteval auto SetCamPos(short x, short y, short z) const
@@ -178,7 +165,7 @@ public:
 	// Set camera target position and position (coordinates in fxu)
 	consteval auto SetCamTargetAndPos(Vector3_16 target, Vector3_16 pos) const
 	{
-		return CamInstruction<2>(ToByteArray(target, pos));
+		return CamInstruction<2>(target, pos);
 	}
 
 	consteval auto SetCamTargetAndPos(short tx, short ty, short tz, short px, short py, short pz) const
@@ -189,48 +176,48 @@ public:
 	// Set camera FOV modifier (not sure if it's exactly the FOV, might be FOV/2)
 	consteval auto SetCamFOV(uint16_t fovModifier) const
 	{
-		return CamInstruction<3>(ToByteArray(fovModifier));
+		return CamInstruction<3>(fovModifier);
 	}
 
 	// Adjust camera FOV modifier
 	consteval auto AdjustCamFOV(uint16_t targetModifier, uint16_t speed) const
 	{
-		return CamInstruction<4>(ToByteArray(targetModifier, speed));
+		return CamInstruction<4>(targetModifier, speed);
 	}
 
 	// Adjust screen size from full size to target values (uses minFrame and maxFrame for gradient)
 	consteval auto AdjustCamScreenSize(uint8_t left, uint8_t bottom, uint8_t right, uint8_t top) const
 	{
-		return CamInstruction<5>(ToByteArray(left, bottom, right, top));
+		return CamInstruction<5>(left, bottom, right, top);
 	}
 
 	// Weird cubic interpolation?
 	consteval auto UnkCubicInterpolation(unsigned unk0, unsigned unk1) const // pointers?
 	{
-		return CamInstruction<6>(ToByteArray(unk0, unk1));
+		return CamInstruction<6>(unk0, unk1);
 	}
 
 	// Set a stored value presumably used by the camera
 	consteval auto SetStoredFix12(Fix12i newValue) const
 	{
-		return CamInstruction<13>(ToByteArray(newValue));
+		return CamInstruction<13>(newValue);
 	}
 
 	// The same as above but the type is an int for backwards compatibility
 	consteval auto SetStoredFix12(int newValue) const
 	{
-		return CamInstruction<13>(ToByteArray(newValue));
+		return CamInstruction<13>(newValue);
 	}
 
 	consteval auto AdjustStoredFix12(Fix12i target, Fix12i speed) const
 	{
-		return CamInstruction<14>(ToByteArray(target, speed));
+		return CamInstruction<14>(target, speed);
 	}
 
 	// The same as above but types are int for backwards compatibility
 	consteval auto AdjustStoredFix12(int target, int speed) const
 	{
-		return CamInstruction<14>(ToByteArray(target, speed));
+		return CamInstruction<14>(target, speed);
 	}
 
 	// Adjust camera target position via exponential decay
@@ -239,7 +226,7 @@ public:
 		Vector3_16 approach // approach factors
 	) const
 	{
-		return CamInstruction<15>(ToByteArray(dest, approach));
+		return CamInstruction<15>(dest, approach);
 	}
 
 	consteval auto AdjustCamTargetDec(
@@ -280,7 +267,7 @@ public:
 		Vector3_16 approach // approach factors
 	) const
 	{
-		return CamInstruction<16>(ToByteArray(dest, approach));
+		return CamInstruction<16>(dest, approach);
 	}
 
 	consteval auto AdjustCamPosDec(
@@ -324,7 +311,7 @@ public:
 	// Adjust camera target position to offset from owner via exponential decay
 	consteval auto SetCamTargetRelativeDec(Vector3_16 offset, uint8_t approachFactorLsl8) const
 	{
-		return CamInstruction<18>(ToByteArray(offset, approachFactorLsl8));
+		return CamInstruction<18>(offset, approachFactorLsl8);
 	}
 
 	consteval auto SetCamTargetRelativeDec(short x, short y, short z, uint8_t approachFactorLsl8) const
@@ -335,7 +322,7 @@ public:
 	// Adjust camera target position to offset from owner rotated by owner's facing angle via exponential decay
 	consteval auto AdjustCamByOwnerAngleDec(Vector3_16 offset, uint8_t approachFactorLsl8) const
 	{
-		return CamInstruction<19>(ToByteArray(offset, approachFactorLsl8));
+		return CamInstruction<19>(offset, approachFactorLsl8);
 	}
 
 	consteval auto AdjustCamByOwnerAngleDec(short x, short y, short z, uint8_t approachFactorLsl8) const
@@ -353,30 +340,30 @@ public:
 		uint8_t  invHorzAngleApproach  // 1 divided by the horizontal angle's approach factor (Set to 0 to not change horizontal angle)
 	) const
 	{
-		return CamInstruction<20>(ToByteArray(
+		return CamInstruction<20>(
 			targetDist, approachFactorLsl8,
 			targetVertAngle, invVertAngleApproach,
 			targetHorzAngle, invHorzAngleApproach
-		));
+		);
 	}
 
 	// Spin camera target position around camera position
 	// Sets a stored vector to the target position on the first frame
 	consteval auto SpinCamTarget(short vertAngularSpeed, short horzAngularSpeed) const
 	{
-		return CamInstruction<21>(ToByteArray(vertAngularSpeed, horzAngularSpeed));
+		return CamInstruction<21>(vertAngularSpeed, horzAngularSpeed);
 	}
 
 	// Spin the camera position around its owner position
 	consteval auto SpinCamAroundOwnerPos(int speed, short vertAngularSpeed, short horzAngularSpeed) const
 	{
-		return CamInstruction<22>(ToByteArray(speed, vertAngularSpeed, horzAngularSpeed));
+		return CamInstruction<22>(speed, vertAngularSpeed, horzAngularSpeed);
 	}
 
 	// Adjust FOV modifier via exponential decay (invApproachFactor = 1 / approachFactor)
 	consteval auto AdjustCamFOVDec(uint16_t targetModifier, uint8_t invApproachFactor) const
 	{
-		return CamInstruction<23>(ToByteArray(targetModifier, invApproachFactor));
+		return CamInstruction<23>(targetModifier, invApproachFactor);
 	}
 
 	// Adjust camera FOV if new value is greater than the old value
@@ -386,14 +373,14 @@ public:
 		short    fovOscillationAngularSpeed
 	) const
 	{
-		return CamInstruction<24>(ToByteArray(
+		return CamInstruction<24>(
 			newModifier,
 			fovSpeedTowards0,
 			fovOscillationAngularSpeed
-		));
+		);
 	}
 
-	// This probably isn't actually a nop but it's here for backwards compatibility
+	// Not actually a nop, but something to do with angles
 	consteval auto NopCam() const
 	{
 		return CamInstruction<25>();
@@ -410,7 +397,7 @@ public:
 	// Set camera target position and position to rotated offset from owner (in fxu)
 	consteval auto SetCamTargetAndPosRotatedFromOwner(Vector3_16 target, Vector3_16 pos) const
 	{
-		return CamInstruction<27>(ToByteArray(target, pos));
+		return CamInstruction<27>(target, pos);
 	}
 
 	consteval auto SetCamTargetAndPosRotatedFromOwner(short tx, short ty, short tz, short px, short py, short pz) const
@@ -418,37 +405,37 @@ public:
 		return SetCamTargetAndPosRotatedFromOwner(Vector3_16{tx, ty, tz}, Vector3_16{px, py, pz});
 	}
 
-	// Wifi Related
-	consteval auto Wifi() const { return Instruction<5>(); }
+	// Waits for a button or touchscreen input and returns to the title screen (previously named "Wifi" for some reason)
+	consteval auto WaitAndLoadTitleScreen() const { return Instruction<5>(); }
 
 	// Change cutscene script (by raw address)
 	consteval auto ChangeScript(unsigned newScriptAddress) const
 	{
-		return Instruction<6>(ToByteArray(newScriptAddress));
+		return Instruction<6>(newScriptAddress);
 	}
 
 	// Change music
 	consteval auto ChangeMusic(unsigned musicID) const
 	{
-		return Instruction<7>(ToByteArray(musicID));
+		return Instruction<7>(musicID);
 	}
 
 	// Play sound from SSAR 1 (player voices). [].
 	consteval auto PlaySoundSSAR1(unsigned soundID) const
 	{
-		return Instruction<8>(ToByteArray(soundID));
+		return Instruction<8>(soundID);
 	}
 	
 	// Play sound from SSAR 2 (system)
 	consteval auto PlaySoundSSAR2(unsigned soundID) const
 	{
-		return Instruction<9>(ToByteArray(soundID));
+		return Instruction<9>(soundID);
 	}
 	
 	// Display a message
 	consteval auto DisplayMessage(uint16_t messageID) const
 	{
-		return Instruction<10>(ToByteArray(messageID));
+		return Instruction<10>(messageID);
 	}
 
 	// Change level (with raw cutscene address)
@@ -459,10 +446,10 @@ public:
 		unsigned cutsceneAddress = 0 // 0 if none
 	) const
 	{
-		return Instruction<11>(ToByteArray(
+		return Instruction<11>(
 			newLevelID, entranceID, starID,
 			cutsceneAddress
-		));
+		);
 	}
 
 	// Fade to white
@@ -480,27 +467,27 @@ public:
 	// Fade to black, then fade from black
 	consteval auto FadeToBlackAndBack() const { return Instruction<16>(); }
 	
-	// Store 0 at 0x02110AEC
-	consteval auto STZ() const { return Instruction<17>(); }
+	// Enables the "Ambient Sound Effects" objects by storing 0 at 0x02110aec (previously named "STZ")
+	consteval auto EnableAmbientSoundEffects() const { return Instruction<17>(); }
 
 	// Set position and Y-angle (both model and motion angle)
 	template<CharacterID character>
-	consteval auto SetPlayerPosAndAngleY(Vector3_16 pos, short yAngle) const
+	consteval auto SetPlayerPosAndAngleY(Vector3_16 pos, short angleY) const
 	{
-		return PlayerInstruction<character, 0>(ToByteArray(pos, yAngle));
+		return PlayerInstruction<character, 0>(pos, angleY);
 	}
 
 	template<CharacterID character>
-	consteval auto SetPlayerPosAndAngleY(short xPos, short yPos, short zPos, short yAngle) const
+	consteval auto SetPlayerPosAndAngleY(short xPos, short yPos, short zPos, short angleY) const
 	{
-		return SetPlayerPosAndAngleY<character>(Vector3_16{xPos, yPos, zPos}, yAngle);
+		return SetPlayerPosAndAngleY<character>(Vector3_16{xPos, yPos, zPos}, angleY);
 	}
 
 	// Send input to move the player to a target position (full magnitude: 0x1000)
 	template<CharacterID character>
 	consteval auto SendPlayerInput(Vector3_16 pos, short inputMagnitude) const
 	{
-		return PlayerInstruction<character, 1>(ToByteArray(pos, inputMagnitude));
+		return PlayerInstruction<character, 1>(pos, inputMagnitude);
 	}
 
 	template<CharacterID character>
@@ -513,7 +500,7 @@ public:
 	template<CharacterID character>
 	consteval auto SendPlayerInput(Vector3_16 pos, Fix12s inputMagnitude = 1._fs) const
 	{
-		return PlayerInstruction<character, 1>(ToByteArray(pos, inputMagnitude));
+		return PlayerInstruction<character, 1>(pos, inputMagnitude);
 	}
 
 	template<CharacterID character>
@@ -522,9 +509,9 @@ public:
 		return SendPlayerInput<character>(Vector3_16{xPos, yPos, zPos}, inputMagnitude);
 	}
 
-	// Orr player flags with 0x24000000
+	// Orr player flags with 0x24000000 (previously named OrrPlayerFlags)
 	template<CharacterID character>
-	consteval auto OrrPlayerFlags() const
+	consteval auto ActivatePlayer() const
 	{
 		return PlayerInstruction<character, 2>();
 	}
@@ -540,28 +527,28 @@ public:
 	template<CharacterID character>
 	consteval auto PlayPlayerVoice(unsigned soundID) const
 	{
-		return PlayerInstruction<character, 4>(ToByteArray(soundID));
+		return PlayerInstruction<character, 4>(soundID);
 	}
 
 	// Play sound from SSAR0
 	template<CharacterID character>
 	consteval auto PlayerPlaySoundSSAR0(unsigned soundID) const
 	{
-		return PlayerInstruction<character, 5>(ToByteArray(soundID));
+		return PlayerInstruction<character, 5>(soundID);
 	}
 
 	// Play sound from SSAR3
 	template<CharacterID character>
 	consteval auto PlayerPlaySoundSSAR3(unsigned soundID) const
 	{
-		return PlayerInstruction<character, 6>(ToByteArray(soundID));
+		return PlayerInstruction<character, 6>(soundID);
 	}
 
 	// Press and hold buttons
 	template<CharacterID character>
 	consteval auto PlayerHoldButtons(uint16_t buttons) const
 	{
-		return PlayerInstruction<character, 7>(ToByteArray(buttons));
+		return PlayerInstruction<character, 7>(buttons);
 	}
 
 	// Drop the player with a speed of 32 fxu/frame and give him wings for 408 frames
@@ -576,7 +563,7 @@ public:
 	template<CharacterID character>
 	consteval auto HurtPlayer(short directionOfSource) const
 	{
-		return PlayerInstruction<character, 9>(ToByteArray(directionOfSource));
+		return PlayerInstruction<character, 9>(directionOfSource);
 	}
 
 	// A weird cap animation
@@ -590,7 +577,7 @@ public:
 	template<CharacterID character>
 	consteval auto TurnPlayerDec(short newAngleY) const
 	{
-		return PlayerInstruction<character, 11>(ToByteArray(newAngleY));
+		return PlayerInstruction<character, 11>(newAngleY);
 	}
 
 	// Make the player move forward at a certain speed (does not change animation)
@@ -606,41 +593,33 @@ public:
 	{
 		return PlayerInstruction<character, 13>();
 	}
-
-	// --- Custom Instructions ---
-
-	consteval auto CubicInterpCamPos(Vector3_16 dest) const
-	{
-		return CamInstruction<31>(ToByteArray(dest));
-	}
-
-	consteval auto CubicInterpCamPos(short dx, short dy, short dz) const
-	{
-		return CubicInterpCamPos(Vector3_16{dx, dy, dz});
-	}
-
-	consteval auto CubicInterpCamTarget(Vector3_16 dest) const
-	{
-		return CamInstruction<32>(ToByteArray(dest));
-	}
-
-	consteval auto CubicInterpCamTarget(short dx, short dy, short dz) const
-	{
-		return CubicInterpCamTarget(Vector3_16{dx, dy, dz});
-	}
 };
+
+template<std::size_t scriptSize = 0>
+class VanillaScriptCompiler : public BaseScriptCompiler<VanillaScriptCompiler, scriptSize> {};
+
+struct DefaultCompilerTag {};
+
+template<DefaultCompilerTag>
+struct DefaultScriptCompiler
+{
+	using Type = VanillaScriptCompiler<>;
+};
+
+template<template<DefaultCompilerTag> class T = DefaultScriptCompiler>
+consteval T<{}>::Type NewScript()
+{
+	return {};
+}
 
 } // namespace KuppaScriptImpl
 
-consteval KuppaScriptImpl::Builder<> NewScript() { return {}; }
+using KuppaScriptImpl::NewScript;
 
-template<const auto builder> requires (
-	std::same_as<decltype(builder),
-	const KuppaScriptImpl::Builder<builder.data.size()>>
-)
+template<const auto scriptCompiler>
 inline bool Run()
 {
-	static constinit auto script = builder.End();
+	static constinit auto script = scriptCompiler.End();
 
 	return script.Run();
 }

@@ -370,7 +370,8 @@ struct Camera : public View // internal name: dCamera
 	virtual int  Render() override;
 	virtual void Virtual30() override;
 
-	void SaveCameraStateBeforeTalk();				//Saves the current camera state
+	void SaveCameraStateBeforeTalk(); // Saves the current camera state
+	int RunKuppaScriptInstruction(char* instruction, short minFrame, short maxFrame);
 
 	//Func_0200D954
 	//Func_0200D8C8
@@ -700,8 +701,7 @@ struct Player : public Actor
 	       ST_CLIMB,
 	       ST_HEADSTAND,
 	       ST_POLE_JUMP,
-	       ST_HEADSTAND_JUMP,
-	       ST_LAUNCH_STAR;
+	       ST_HEADSTAND_JUMP;
 
 
 	enum TalkStates
@@ -796,7 +796,7 @@ struct Player : public Actor
 	Matrix4x3 unkMat5ec;
 	unsigned unk61c;
 	unsigned unk620;
-	unsigned unk624;
+	unsigned playLongUniqueID;
 	unsigned unk628;
 	unsigned unk62c;
 	unsigned unk630;
@@ -956,6 +956,7 @@ struct Player : public Actor
 	void Heal(int health);
 	void Bounce(Fix12i bounceInitVel);
 	bool ChangeState(Player::State& state);
+	int RunKuppaScriptInstruction(char* instruction, short minFrame, short maxFrame);
 
 	bool IsWarping() const
 	{
@@ -1203,6 +1204,7 @@ extern "C"
 	extern EnemyDeathFunc ENEMY_DEATH_FUNCS[8];
 
 	extern uint8_t GAME_PAUSED; // 0 = not paused, 1 = paused, 2 = unpausing
+	extern unsigned AMBIENT_SOUND_EFFECTS_ENABLED;
 
 	short GetAngleToCamera(unsigned playerID = 0);
 
@@ -1225,6 +1227,7 @@ extern "C"
 	void LinkSilverStarAndStarMarker(Actor* starMarker, Actor* silverStar);
 	
 	short ReadUnalignedShort(const char* from);
+	int ReadUnalignedInt(const char* from);
 }
 
 //Obj to Model Scale: Divide integer units by 8. (So 1.000 (Q20.12) becomes 1000 / 8 = 125.)
