@@ -12,141 +12,141 @@ class ExtendedScriptCompiler : public BaseScriptCompiler<ExtendedScriptCompiler,
 
 public:
 	template<uint8_t subID, class... Args>
-	consteval auto CamInstruction(const Args&... args) const
+	consteval auto CamInstruction(const Args&... args)
 	{
-		return static_cast<const Base&>(*this).template CamInstruction<subID, Args...>(args...);
+		return static_cast<Base&>(*this).template CamInstruction<subID, Args...>(args...);
 	}
 
 	template<CharacterID character, uint8_t subID, class... Args>
-	consteval auto PlayerInstruction(const Args&... args) const
+	consteval auto PlayerInstruction(const Args&... args)
 	{
-		return static_cast<const Base&>(*this).template PlayerInstruction<character, subID, Args...>(args...);
+		return static_cast<Base&>(*this).template PlayerInstruction<character, subID, Args...>(args...);
 	}
 
 	/* -------- -------- Custom player instructions -------- -------- */
 
 	template<CharacterID character>
-	consteval auto SetPlayerPos(Vector3_16 pos) const
+	consteval auto SetPlayerPos(Vector3_16 pos)
 	{
 		return PlayerInstruction<character, 14>(pos);
 	}
 
 	template<CharacterID character>
-	consteval auto SetPlayerPos(short x, short y, short z) const
+	consteval auto SetPlayerPos(short x, short y, short z)
 	{
 		return PlayerInstruction<character, 14>(x, y, z);
 	}
 
 	template<CharacterID character>
-	consteval auto MovePlayer(Vector3_16 offset) const
+	consteval auto MovePlayer(Vector3_16 offset)
 	{
 		return PlayerInstruction<character, 15>(offset);
 	}
 
 	template<CharacterID character>
-	consteval auto MovePlayer(short x, short y, short z) const
+	consteval auto MovePlayer(short x, short y, short z)
 	{
 		return PlayerInstruction<character, 15>(x, y, z);
 	}
 
 	template<CharacterID character>
-	consteval auto SetPlayerAngleY(short angleY) const
+	consteval auto SetPlayerAngleY(short angleY)
 	{
 		return PlayerInstruction<character, 16>(angleY);
 	}
 
 	template<CharacterID character>
-	consteval auto TurnPlayer(short angleOffsetY) const
+	consteval auto TurnPlayer(short angleOffsetY)
 	{
 		return PlayerInstruction<character, 17>(angleOffsetY);
 	}
 
 	template<CharacterID character>
-	consteval auto ExpDecayPlayerAngleY(short targetAngle, int invFactor, int maxDelta = 180_deg, int minDelta = 0) const
+	consteval auto ExpDecayPlayerAngleY(short targetAngle, int invFactor, int maxDelta = 180_deg, int minDelta = 0)
 	{
 		return PlayerInstruction<character, 18>(targetAngle, invFactor, maxDelta, minDelta);
 	}
 
 	template<CharacterID character>
-	consteval auto PlayLong(unsigned soundArchiveID, unsigned soundID) const
+	consteval auto PlayLong(unsigned soundArchiveID, unsigned soundID)
 	{
 		return PlayerInstruction<character, 19>(soundArchiveID, soundID);
 	}
 
 	template<CharacterID character>
-	consteval auto HurtPlayer(Vector3_16 source, unsigned damage = 0, Fix12i speed = 12._f, unsigned arg4 = 1, unsigned presetHurt = 0, unsigned spawnOuchParticles = 1) const
+	consteval auto HurtPlayer(Vector3_16 source, unsigned damage = 0, Fix12i speed = 12._f, unsigned arg4 = 1, unsigned presetHurt = 0, unsigned spawnOuchParticles = 1)
 	{
 		return PlayerInstruction<character, 20>(source, damage, speed, arg4, presetHurt, spawnOuchParticles);
 	}
 
 	template<CharacterID character>
-	consteval auto BurnPlayer() const
+	consteval auto BurnPlayer()
 	{
 		return PlayerInstruction<character, 21>();
 	}
 
 	template<CharacterID character>
-	consteval auto ShockPlayer(unsigned damage = 0) const
+	consteval auto ShockPlayer(unsigned damage = 0)
 	{
 		return PlayerInstruction<character, 22>(damage);
 	}
 
 	template<CharacterID character>
-	consteval auto BouncePlayer(Fix12i initVel) const
+	consteval auto BouncePlayer(Fix12i initVel)
 	{
 		return PlayerInstruction<character, 23>(initVel);
 	}
 
 	template<CharacterID character>
-	consteval auto PrintPlayerPos() const
+	consteval auto PrintPlayerPos()
 	{
 		return PlayerInstruction<character, 24>();
 	}
 
 	/* -------- -------- Custom camera instructions -------- -------- */
 
-	consteval auto LerpCamPos(Vector3_16 dest, uint8_t smoothness) const
+	consteval auto LerpCamPos(Vector3_16 dest, uint8_t smoothness)
 	{
 		return CamInstruction<39>(dest, smoothness);
 	}
 
-	consteval auto LerpCamPos(short x, short y, short z, uint8_t smoothness) const
+	consteval auto LerpCamPos(short x, short y, short z, uint8_t smoothness)
 	{
 		return CamInstruction<39>(x, y, z, smoothness);
 	}
 
-	consteval auto LerpCamTarget(Vector3_16 dest, uint8_t smoothness) const
+	consteval auto LerpCamTarget(Vector3_16 dest, uint8_t smoothness)
 	{
 		return CamInstruction<40>(dest, smoothness);
 	}
 
-	consteval auto LerpCamTarget(short x, short y, short z, uint8_t smoothness) const
+	consteval auto LerpCamTarget(short x, short y, short z, uint8_t smoothness)
 	{
 		return CamInstruction<40>(x, y, z, smoothness);
 	}
 
-	consteval auto DisableAmbientSoundEffects() const
+	consteval auto DisableAmbientSoundEffects()
 	{
 		return CamInstruction<41>();
 	}
 
-	consteval auto PrintCamPos() const
+	consteval auto PrintCamPos()
 	{
 		return CamInstruction<42>();
 	}
 
-	consteval auto PrintCamTarget() const
+	consteval auto PrintCamTarget()
 	{
 		return CamInstruction<43>();
 	}
 
-	consteval auto PrintFrameCounter() const
+	consteval auto PrintFrameCounter()
 	{
 		return CamInstruction<44>();
 	}
 
 	template<unsigned length>
-	consteval auto Print(const char (&string)[length]) const
+	consteval auto Print(const char (&string)[length])
 	{
 		return CamInstruction<45>(std::to_array<const char, length>(string));
 	}

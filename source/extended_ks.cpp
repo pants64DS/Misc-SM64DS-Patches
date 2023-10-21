@@ -9,7 +9,7 @@ namespace KuppaScriptImpl
 	using PendingInstruction = ESC::PendingInstruction<(sizeof(Args) + ... + 1)>;
 
 	template<class... Args>
-	using Overload = PendingInstruction<Args...>(ESC::*)(Args...) const;
+	using Overload = PendingInstruction<Args...>(ESC::*)(Args...);
 
 	template<uint8_t id>
 	struct ObjByID {};
