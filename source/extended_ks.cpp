@@ -14,7 +14,7 @@ namespace KuppaScriptImpl
 	template<uint8_t id>
 	struct ObjByID {};
 
-	template<uint8_t id> requires (id < 4)
+	template<uint8_t id> requires (id < 4 || id == 0xff)
 	struct ObjByID<id> { using Type = Player; };
 
 	template<> struct ObjByID<4> { using Type = Camera; };
@@ -115,7 +115,7 @@ namespace KuppaScriptImpl
 
 		if (vFuncID < numVFuncs<Obj>)
 		{
-			obj.RunKuppaScriptInstruction(instruction, minFrame, maxFrame);
+			obj.CallKuppaScriptInstruction(instruction, minFrame, maxFrame);
 
 			return;
 		}
@@ -144,14 +144,27 @@ void repl_0200ed4c(Camera& cam, char* instruction, short minFrame, short maxFram
 }
 
 asm(R"(
-@ undo ActivatePlayer for player 0 every time a cutscene ends
-nsub_0200e7b0:
-	ldr   r0,=PLAYER_ARR
-	ldr   r0,[r0]
+@ Support player instructions that don't refer to a specific character
+nsub_0200ed70:
+	cmp   r0, #0xff
+	bne   0x0200ed78
+	ldr   r0, =PLAYER_ARR
+	mov   r1, r4
+	ldr   r0, [r0]
+	mov   r2, r9
 	cmp   r0, #0
-	ldrne r2,[r0, #0xb0]
+	mov   r3, r10
+	blne  _Z13repl_0200e5f0R6PlayerPcss
+	b     0x0200ed88
+
+@ Undo ActivatePlayer for player 0 every time a cutscene ends
+nsub_0200e7b0:
+	ldr   r0, =PLAYER_ARR
+	ldr   r0, [r0]
+	cmp   r0, #0
+	ldrne r2, [r0, #0xb0]
 	bicne r2, r2, #0x24000000
-	strne r2,[r0, #0xb0]
-	ldr   r0,=#0x020890a0
+	strne r2, [r0, #0xb0]
+	ldr   r0, =#0x020890a0
 	b     0x0200e7b4
 )");

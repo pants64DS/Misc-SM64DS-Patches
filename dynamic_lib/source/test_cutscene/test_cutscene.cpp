@@ -1,4 +1,5 @@
 #include "extended_ks.h"
+#include "include/Input.h"
 
 constinit auto script = NewScript().
 
@@ -13,6 +14,9 @@ constinit auto script = NewScript().
 	ActivatePlayer<Luigi>() (11).
 	ActivatePlayer<Wario>() (21).
 	ActivatePlayer<Yoshi>() (31).
+
+	PlayerHoldButtons(Input::R) (89).
+	PlayerHoldButtons(Input::A) (90).
 
 	SetPlayerAngleY<Mario>(-180_deg) (60).
 	SetPlayerAngleY<Luigi>(  83_deg) (70).

@@ -371,7 +371,7 @@ struct Camera : public View // internal name: dCamera
 	virtual void Virtual30() override;
 
 	void SaveCameraStateBeforeTalk(); // Saves the current camera state
-	int RunKuppaScriptInstruction(char* instruction, short minFrame, short maxFrame);
+	int CallKuppaScriptInstruction(char* instruction, short minFrame, short maxFrame);
 
 	//Func_0200D954
 	//Func_0200D8C8
@@ -956,7 +956,7 @@ struct Player : public Actor
 	void Heal(int health);
 	void Bounce(Fix12i bounceInitVel);
 	bool ChangeState(Player::State& state);
-	int RunKuppaScriptInstruction(char* instruction, short minFrame, short maxFrame);
+	int CallKuppaScriptInstruction(char* instruction, short minFrame, short maxFrame);
 
 	bool IsWarping() const
 	{

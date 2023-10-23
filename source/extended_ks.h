@@ -3,6 +3,8 @@
 
 #include "include/Cutscene.h"
 
+using Any = KuppaScriptImpl::CharID_Type<0xff>;
+
 namespace KuppaScriptImpl {
 
 template<std::size_t scriptSize = 0>
@@ -17,90 +19,90 @@ public:
 		return static_cast<Base&>(*this).template CamInstruction<subID, Args...>(args...);
 	}
 
-	template<CharacterID character, uint8_t subID, class... Args>
+	template<CharID Char, uint8_t subID, class... Args>
 	consteval auto PlayerInstruction(const Args&... args)
 	{
-		return static_cast<Base&>(*this).template PlayerInstruction<character, subID, Args...>(args...);
+		return static_cast<Base&>(*this).template PlayerInstruction<Char, subID, Args...>(args...);
 	}
 
 	/* -------- -------- Custom player instructions -------- -------- */
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto SetPlayerPos(Vector3_16 pos)
 	{
-		return PlayerInstruction<character, 14>(pos);
+		return PlayerInstruction<Char, 14>(pos);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto SetPlayerPos(short x, short y, short z)
 	{
-		return PlayerInstruction<character, 14>(x, y, z);
+		return PlayerInstruction<Char, 14>(x, y, z);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto MovePlayer(Vector3_16 offset)
 	{
-		return PlayerInstruction<character, 15>(offset);
+		return PlayerInstruction<Char, 15>(offset);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto MovePlayer(short x, short y, short z)
 	{
-		return PlayerInstruction<character, 15>(x, y, z);
+		return PlayerInstruction<Char, 15>(x, y, z);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto SetPlayerAngleY(short angleY)
 	{
-		return PlayerInstruction<character, 16>(angleY);
+		return PlayerInstruction<Char, 16>(angleY);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto TurnPlayer(short angleOffsetY)
 	{
-		return PlayerInstruction<character, 17>(angleOffsetY);
+		return PlayerInstruction<Char, 17>(angleOffsetY);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto ExpDecayPlayerAngleY(short targetAngle, int invFactor, int maxDelta = 180_deg, int minDelta = 0)
 	{
-		return PlayerInstruction<character, 18>(targetAngle, invFactor, maxDelta, minDelta);
+		return PlayerInstruction<Char, 18>(targetAngle, invFactor, maxDelta, minDelta);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto PlayLong(unsigned soundArchiveID, unsigned soundID)
 	{
-		return PlayerInstruction<character, 19>(soundArchiveID, soundID);
+		return PlayerInstruction<Char, 19>(soundArchiveID, soundID);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto HurtPlayer(Vector3_16 source, unsigned damage = 0, Fix12i speed = 12._f, unsigned arg4 = 1, unsigned presetHurt = 0, unsigned spawnOuchParticles = 1)
 	{
-		return PlayerInstruction<character, 20>(source, damage, speed, arg4, presetHurt, spawnOuchParticles);
+		return PlayerInstruction<Char, 20>(source, damage, speed, arg4, presetHurt, spawnOuchParticles);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto BurnPlayer()
 	{
-		return PlayerInstruction<character, 21>();
+		return PlayerInstruction<Char, 21>();
 	}
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto ShockPlayer(unsigned damage = 0)
 	{
-		return PlayerInstruction<character, 22>(damage);
+		return PlayerInstruction<Char, 22>(damage);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto BouncePlayer(Fix12i initVel)
 	{
-		return PlayerInstruction<character, 23>(initVel);
+		return PlayerInstruction<Char, 23>(initVel);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = Any>
 	consteval auto PrintPlayerPos()
 	{
-		return PlayerInstruction<character, 24>();
+		return PlayerInstruction<Char, 24>();
 	}
 
 	/* -------- -------- Custom camera instructions -------- -------- */
@@ -155,6 +157,11 @@ public:
 template<> struct DefaultScriptCompiler<{}>
 {
 	using Type = ExtendedScriptCompiler<>;
+};
+
+template<> struct DefaultCharImpl<ExtendedScriptCompiler>
+{
+	using Type = Any;
 };
 
 } // namespace KuppaScriptImpl
