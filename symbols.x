@@ -612,7 +612,7 @@ _ZN5EnemyD2Ev                                                                   
 _ZN5EnemyC2Ev                                                                     = 0x020aed98;
 _ZN8CapEnemyD0Ev                                                                  = 0x020aedf4;
 
-_ZN6Player25RunKuppaScriptInstructionEPcss                                        = 0x020bd664;
+_ZN6Player26CallKuppaScriptInstructionEPcss                                       = 0x020bd664;
 _ZN6Player16IncMegaKillCountEv                                                    = 0x020bdc58;
 _ZN6Player18SetNewHatCharacterEjjb                                                = 0x020be0f8;
 _ZN6Player16SetRealCharacterEj                                                    = 0x020be1e0;
@@ -806,7 +806,7 @@ _ZN6Camera6RenderEv                                                             
 _ZN6Camera9Virtual30Ev                                                            = 0x0200DA00;
 _ZN6CameraD0Ev                                                                    = 0x02007098;
 _ZN6CameraD1Ev                                                                    = 0x0200705C;
-_ZN6Camera25RunKuppaScriptInstructionEPcss                                        = 0x02008550;
+_ZN6Camera26CallKuppaScriptInstructionEPcss                                       = 0x02008550;
 _ZN6CameraC1Ev                                                                    = 0x0200E444;
 _ZN6Camera25SaveCameraStateBeforeTalkEv                                           = 0x0200CC5C;
 

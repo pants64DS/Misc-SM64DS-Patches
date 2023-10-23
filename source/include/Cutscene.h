@@ -27,16 +27,6 @@ extern "C"
 	extern char* RUNNING_KUPPA_SCRIPT; // nullptr if no script is running
 }
 
-enum class CharacterID
-{
-	Mario,
-	Luigi,
-	Wario,
-	Yoshi
-};
-
-using enum CharacterID;
-
 template<std::size_t size> requires(size > 0)
 struct KuppaScript
 {
@@ -55,6 +45,21 @@ struct KuppaScript
 };
 
 namespace KuppaScriptImpl {
+
+template<uint8_t id>
+struct CharID_Type
+{
+	static constexpr uint8_t instructionID = id;
+};
+
+template<class T>
+concept CharID = std::same_as<T, CharID_Type<T::instructionID>>;
+
+template<template<std::size_t> class>
+struct DefaultCharImpl { using Type = void; };
+
+template<template<std::size_t> class Compiler>
+using DefaultChar = DefaultCharImpl<Compiler>::Type;
 
 template<class T, std::size_t s1, std::size_t s2>
 consteval auto operator+(const std::array<T, s1>& a1, const std::array<T, s2>& a2)
@@ -128,10 +133,10 @@ public:
 		return {id, precedingScript, ToByteArray(args...)};
 	}
 
-	template<CharacterID character, uint8_t subID, class... Args>
+	template<CharID Char, uint8_t subID, class... Args>
 	consteval auto PlayerInstruction(const Args&... args)
 	{
-		return Instruction<static_cast<uint8_t>(character)>(subID, args...);
+		return Instruction<Char::instructionID>(subID, args...);
 	}
 
 	template<uint8_t subID, class... Args>
@@ -471,127 +476,127 @@ public:
 	consteval auto EnableAmbientSoundEffects() { return Instruction<17>(); }
 
 	// Set position and Y-angle (both model and motion angle)
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto SetPlayerPosAndAngleY(Vector3_16 pos, short angleY)
 	{
-		return PlayerInstruction<character, 0>(pos, angleY);
+		return PlayerInstruction<Char, 0>(pos, angleY);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto SetPlayerPosAndAngleY(short xPos, short yPos, short zPos, short angleY)
 	{
-		return SetPlayerPosAndAngleY<character>(Vector3_16{xPos, yPos, zPos}, angleY);
+		return SetPlayerPosAndAngleY<Char>(Vector3_16{xPos, yPos, zPos}, angleY);
 	}
 
 	// Send input to move the player to a target position (full magnitude: 0x1000)
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto SendPlayerInput(Vector3_16 pos, short inputMagnitude)
 	{
-		return PlayerInstruction<character, 1>(pos, inputMagnitude);
+		return PlayerInstruction<Char, 1>(pos, inputMagnitude);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto SendPlayerInput(short xPos, short yPos, short zPos, short inputMagnitude)
 	{
-		return SendPlayerInput<character>(Vector3_16{xPos, yPos, zPos}, inputMagnitude);
+		return SendPlayerInput<Char>(Vector3_16{xPos, yPos, zPos}, inputMagnitude);
 	}
 
 	// Send input to move the player to a target position (full magnitude: 1._fs)
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto SendPlayerInput(Vector3_16 pos, Fix12s inputMagnitude = 1._fs)
 	{
-		return PlayerInstruction<character, 1>(pos, inputMagnitude);
+		return PlayerInstruction<Char, 1>(pos, inputMagnitude);
 	}
 
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto SendPlayerInput(short xPos, short yPos, short zPos, Fix12s inputMagnitude = 1._fs)
 	{
-		return SendPlayerInput<character>(Vector3_16{xPos, yPos, zPos}, inputMagnitude);
+		return SendPlayerInput<Char>(Vector3_16{xPos, yPos, zPos}, inputMagnitude);
 	}
 
 	// Orr player flags with 0x24000000 (previously named OrrPlayerFlags)
-	template<CharacterID character>
+	template<class Char = DefaultChar<DerivedCompiler>>
 	consteval auto ActivatePlayer()
 	{
-		return PlayerInstruction<character, 2>();
+		return PlayerInstruction<Char, 2>();
 	}
 
 	// Make a player lie down
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto MakePlayerLieDown()
 	{
-		return PlayerInstruction<character, 3>();
+		return PlayerInstruction<Char, 3>();
 	}
 
 	// Player character voice
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto PlayPlayerVoice(unsigned soundID)
 	{
-		return PlayerInstruction<character, 4>(soundID);
+		return PlayerInstruction<Char, 4>(soundID);
 	}
 
 	// Play sound from SSAR0
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto PlayerPlaySoundSSAR0(unsigned soundID)
 	{
-		return PlayerInstruction<character, 5>(soundID);
+		return PlayerInstruction<Char, 5>(soundID);
 	}
 
 	// Play sound from SSAR3
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto PlayerPlaySoundSSAR3(unsigned soundID)
 	{
-		return PlayerInstruction<character, 6>(soundID);
+		return PlayerInstruction<Char, 6>(soundID);
 	}
 
 	// Press and hold buttons
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto PlayerHoldButtons(uint16_t buttons)
 	{
-		return PlayerInstruction<character, 7>(buttons);
+		return PlayerInstruction<Char, 7>(buttons);
 	}
 
 	// Drop the player with a speed of 32 fxu/frame and give him wings for 408 frames
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto GivePlayerWingsAndDrop()
 	{
-		return PlayerInstruction<character, 8>();
+		return PlayerInstruction<Char, 8>();
 	}
 
 	// Hurt the player with an imaginary source 80 fxu away
 	// If the player is Luigi, spawn ouch stars as well. [DirectionOfSource].
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto HurtPlayer(short directionOfSource)
 	{
-		return PlayerInstruction<character, 9>(directionOfSource);
+		return PlayerInstruction<Char, 9>(directionOfSource);
 	}
 
 	// A weird cap animation
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto AnimatePlayerCap(uint8_t state)
 	{
-		return PlayerInstruction<character, 10>(state);
+		return PlayerInstruction<Char, 10>(state);
 	}
 
 	// Turn the player via exponential decay. [NewAngle].
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto TurnPlayerDec(short newAngleY)
 	{
-		return PlayerInstruction<character, 11>(newAngleY);
+		return PlayerInstruction<Char, 11>(newAngleY);
 	}
 
 	// Make the player move forward at a certain speed (does not change animation)
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto MovePlayerForward()
 	{
-		return PlayerInstruction<character, 12>();
+		return PlayerInstruction<Char, 12>();
 	}
 	
 	// Kill the player
-	template<CharacterID character>
+	template<CharID Char = DefaultChar<DerivedCompiler>>
 	consteval auto KillPlayer()
 	{
-		return PlayerInstruction<character, 13>();
+		return PlayerInstruction<Char, 13>();
 	}
 };
 
@@ -623,5 +628,10 @@ inline bool Run()
 
 	return script.Run();
 }
+
+using Mario = KuppaScriptImpl::CharID_Type<0>;
+using Luigi = KuppaScriptImpl::CharID_Type<1>;
+using Wario = KuppaScriptImpl::CharID_Type<2>;
+using Yoshi = KuppaScriptImpl::CharID_Type<3>;
 
 #endif // SM64DS_CUTSCENE_INCLUDED

@@ -1,6 +1,6 @@
 
 
-IMPLEMENT_OVERLOAD(SetPlayerPos<Mario>, Vector3_16)
+IMPLEMENT_OVERLOAD(SetPlayerPos, Vector3_16)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
 	player.pos.x = ReadUnalignedShort(params);
@@ -9,7 +9,7 @@ IMPLEMENT_OVERLOAD(SetPlayerPos<Mario>, Vector3_16)
 }
 
 
-IMPLEMENT_OVERLOAD(MovePlayer<Mario>, Vector3_16)
+IMPLEMENT_OVERLOAD(MovePlayer, Vector3_16)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
 	player.pos.x += ReadUnalignedShort(params);
@@ -18,21 +18,21 @@ IMPLEMENT_OVERLOAD(MovePlayer<Mario>, Vector3_16)
 }
 
 
-IMPLEMENT(SetPlayerAngleY<Mario>)
+IMPLEMENT(SetPlayerAngleY<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
 	player.ang.y = ReadUnalignedShort(params);
 }
 
 
-IMPLEMENT(TurnPlayer<Mario>)
+IMPLEMENT(TurnPlayer<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
 	player.ang.y += ReadUnalignedShort(params);
 }
 
 
-IMPLEMENT(ExpDecayPlayerAngleY<Mario>)
+IMPLEMENT(ExpDecayPlayerAngleY<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
 	const short targetAngle = ReadUnalignedShort(params);
@@ -44,7 +44,7 @@ IMPLEMENT(ExpDecayPlayerAngleY<Mario>)
 }
 
 
-IMPLEMENT(HurtPlayer<Mario>)
+IMPLEMENT(HurtPlayer<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
 	Vector3 source;
@@ -62,28 +62,28 @@ IMPLEMENT(HurtPlayer<Mario>)
 }
 
 
-IMPLEMENT(BurnPlayer<Mario>)
+IMPLEMENT(BurnPlayer<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
 	player.Burn();
 }
 
 
-IMPLEMENT(ShockPlayer<Mario>)
+IMPLEMENT(ShockPlayer<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
 	player.Shock(ReadUnalignedInt(params));
 }
 
 
-IMPLEMENT(BouncePlayer<Mario>)
+IMPLEMENT(BouncePlayer<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
 	player.Bounce({ReadUnalignedInt(params), as_raw});
 }
 
 
-IMPLEMENT(PlayLong<Mario>)
+IMPLEMENT(PlayLong<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
 	const unsigned soundArchiveID = ReadUnalignedInt(params);
@@ -93,7 +93,7 @@ IMPLEMENT(PlayLong<Mario>)
 }
 
 
-IMPLEMENT(PrintPlayerPos<Mario>)
+IMPLEMENT(PrintPlayerPos<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
 	cout << player.pos;
