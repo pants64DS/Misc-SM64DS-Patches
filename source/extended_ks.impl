@@ -1,44 +1,39 @@
+#include "unaligned.h"
 
 
 IMPLEMENT_OVERLOAD(SetPlayerPos, Vector3_16)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
-	player.pos.x = ReadUnalignedShort(params);
-	player.pos.y = ReadUnalignedShort(params + 2);
-	player.pos.z = ReadUnalignedShort(params + 4);
+	player.pos = ReadUnaligned<Vector3_16>(params);
 }
 
 
 IMPLEMENT_OVERLOAD(MovePlayer, Vector3_16)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
-	player.pos.x += ReadUnalignedShort(params);
-	player.pos.y += ReadUnalignedShort(params + 2);
-	player.pos.z += ReadUnalignedShort(params + 4);
+	player.pos += ReadUnaligned<Vector3_16>(params);
 }
 
 
 IMPLEMENT(SetPlayerAngleY<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
-	player.ang.y = ReadUnalignedShort(params);
+	player.ang.y = ReadUnaligned<short>(params);
 }
 
 
 IMPLEMENT(TurnPlayer<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
-	player.ang.y += ReadUnalignedShort(params);
+	player.ang.y += ReadUnaligned<short>(params);
 }
 
 
 IMPLEMENT(ExpDecayPlayerAngleY<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
-	const short targetAngle = ReadUnalignedShort(params);
-	const int   invFactor   = ReadUnalignedInt(params + 2);
-	const int   maxDelta    = ReadUnalignedInt(params + 6);
-	const int   minDelta    = ReadUnalignedInt(params + 10);
+	const auto [targetAngle, invFactor, maxDelta, minDelta]
+		= ReadUnaligned<short, int, int, int>(params);
 
 	ApproachAngle(player.ang.y, targetAngle, invFactor, maxDelta, minDelta);
 }
@@ -47,16 +42,10 @@ IMPLEMENT(ExpDecayPlayerAngleY<>)
 IMPLEMENT(HurtPlayer<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
-	Vector3 source;
-	source.x = ReadUnalignedShort(params);
-	source.y = ReadUnalignedShort(params + 2);
-	source.z = ReadUnalignedShort(params + 4);
+	const Vector3 source = ReadUnaligned<Vector3_16>(params);
 
-	const unsigned damage             =  ReadUnalignedInt(params + 6);
-	const Fix12i speed                = {ReadUnalignedInt(params + 10), as_raw};
-	const unsigned arg4               =  ReadUnalignedInt(params + 14);
-	const unsigned presetHurt         =  ReadUnalignedInt(params + 18);
-	const unsigned spawnOuchParticles =  ReadUnalignedInt(params + 22);
+	const auto [damage, speed, arg4, presetHurt, spawnOuchParticles]
+		= ReadUnaligned<unsigned, Fix12i, unsigned, unsigned, unsigned>(params + 6);
 
 	player.Hurt(source, damage, speed, arg4, presetHurt, spawnOuchParticles);
 }
@@ -72,22 +61,21 @@ IMPLEMENT(BurnPlayer<>)
 IMPLEMENT(ShockPlayer<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
-	player.Shock(ReadUnalignedInt(params));
+	player.Shock(ReadUnaligned<unsigned>(params));
 }
 
 
 IMPLEMENT(BouncePlayer<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
-	player.Bounce({ReadUnalignedInt(params), as_raw});
+	player.Bounce(ReadUnaligned<Fix12i>(params));
 }
 
 
 IMPLEMENT(PlayLong<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
-	const unsigned soundArchiveID = ReadUnalignedInt(params);
-	const unsigned soundID = ReadUnalignedInt(params + 4);
+	const auto [soundArchiveID, soundID] = ReadUnaligned<unsigned, unsigned>(params);
 
 	player.playLongUniqueID = Sound::PlayLong(player.playLongUniqueID, soundArchiveID, soundID, player.camSpacePos, 0);
 }
@@ -113,11 +101,7 @@ static void CubicInterpVec(Vector3& res, const char* params, short minFrame, sho
 	const Fix12i t = Fix12i(KS_FRAME_COUNTER - minFrame, as_raw) / Fix12i(maxFrame - minFrame, as_raw);
 	if(t == 0_f) v0 = res;
 
-	Vector3 v1;
-	v1.x = ReadUnalignedShort(params);
-	v1.y = ReadUnalignedShort(params + 2);
-	v1.z = ReadUnalignedShort(params + 4);
-
+	const Vector3 v1 = ReadUnaligned<Vector3_16>(params);
 	const unsigned smoothness = params[6];
 
 	AssureUnaliased(res) = Lerp(v0, v1, IterateSmoothStep(t, smoothness));

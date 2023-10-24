@@ -156,6 +156,15 @@ struct Fix
 	}();
 };
 
+template<class T>
+concept FixedPoint = std::is_invocable_v
+	<decltype([]<class U, int q, template<class> class CRTP>
+	requires std::derived_from<CRTP<U>, Fix<U, q, CRTP>>
+	(Fix<U, q, CRTP>&&) {}), T>;
+
+template<FixedPoint T>
+using Underlying = decltype(std::declval<T>().val);
+
 template<FixUR T>
 struct Fix12 : Fix<T, 12, Fix12>
 {
