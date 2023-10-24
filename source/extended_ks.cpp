@@ -71,7 +71,7 @@ Implementation<KuppaScriptImpl::GetID<&KuppaScriptImpl::ESC::functionName>>
 Implementation<KuppaScriptImpl::ID<Obj, subID>>
 
 #define IMPLEMENT_OVERLOAD(functionName, ...) template<> auto \
-Implementation<KuppaScriptImpl::GetID<KuppaScriptImpl::Overload<__VA_ARGS__>(&KuppaScriptImpl::ESC::functionName)>>
+Implementation<KuppaScriptImpl::GetID<KuppaScriptImpl::Overload<__VA_ARGS__>{&KuppaScriptImpl::ESC::functionName}>>
 
 #include "extended_ks.impl"
 
