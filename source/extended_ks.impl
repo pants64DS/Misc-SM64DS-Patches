@@ -87,6 +87,23 @@ IMPLEMENT(PrintPlayerPos<>)
 	cout << player.pos;
 }
 
+constinit int8_t entranceMode = -1;
+
+IMPLEMENT(SetEntranceMode)
+(Player& player, const char* params, short minFrame, short maxFrame)
+{
+	entranceMode = *params;
+}
+
+asm(R"(
+nsub_0200e664:
+	ldr   r1, =entranceMode
+	ldrb  r1, [r1]
+	cmp   r1, #0xff
+	movne r12, r1
+	mvn   r1, #0
+	b     0x0200e668
+)");
 
 static Fix12i IterateSmoothStep(Fix12i t, unsigned n)
 {

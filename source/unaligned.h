@@ -85,6 +85,19 @@ namespace UnalignedImpl
 			ReadVector<T>(ptr, res);
 		});
 	}
+
+	template<UnalignedReadable T>
+	using ReadResult = decltype(Read<T>(std::declval<const char*>()));
+
+	template<class... Types> [[gnu::always_inline]]
+	inline decltype(auto) Visit(const char* ptr, auto&& f)
+	{
+		return [&]<std::size_t... i>[[gnu::always_inline]](std::index_sequence<i...>) -> decltype(auto)
+		{
+			return f(Read<Types>(ptr + offsets<Types...>[i])...);
+		}
+		(std::make_index_sequence<sizeof...(Types)>());
+	}
 };
 
 template<UnalignedReadable... Types> [[gnu::always_inline, nodiscard]]
@@ -95,16 +108,17 @@ inline auto ReadUnaligned(const char* ptr)
 	if constexpr (sizeof...(Types) == 1)
 		return Read<Types...>(ptr);
 	else
+		return Visit<Types...>(ptr, std::make_tuple<ReadResult<Types>...>);
+}
+
+template<class F> [[gnu::always_inline]]
+inline decltype(auto) VisitUnaligned(const char* ptr, F&& f)
+{
+	return [&]<class R, class... Args>[[gnu::always_inline]](R(F::*)(Args...) const) -> R
 	{
-		return [&]<std::size_t... i>[[gnu::always_inline]](std::index_sequence<i...>)
-		{
-			return std::tuple<Types...>
-			{
-				Read<Types>(ptr + offsets<Types...>[i])...
-			};
-		}
-		(std::make_index_sequence<sizeof...(Types)>());
+		return UnalignedImpl::Visit<Args...>(ptr, f);
 	}
+	(&F::operator());
 }
 
 #endif

@@ -3,10 +3,17 @@
 
 constinit auto script = NewScript().
 
-	SetPlayerPos<Mario>(-1187, 254, 6167) (1).
+	SetEntranceMode(2) (1).
+	SetPlayerPos<Mario>(-1187, 500, 6167) (1).
+
+	SetEntranceMode(0) (1).
 	SetPlayerPos<Luigi>(-1487, 254, 6467) (1).
-	SetPlayerPos<Wario>(-1287, 254, 6767) (1).
-	SetPlayerPos<Yoshi>( -987, 254, 6567) (1).
+
+	SetEntranceMode(4) (1).
+	SetPlayerPos<Wario>(-1287, 1000, 6767) (1).
+
+	SetEntranceMode(10) (1).
+	SetPlayerPos<Yoshi>( -987, 1000, 6567) (1).
 
 	DisableAmbientSoundEffects() (1).
 

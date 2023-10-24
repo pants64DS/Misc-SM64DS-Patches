@@ -105,6 +105,11 @@ public:
 		return PlayerInstruction<Char, 24>();
 	}
 
+	consteval auto SetEntranceMode(int8_t entranceMode)
+	{
+		return PlayerInstruction<Any, 25>(entranceMode);
+	}
+
 	/* -------- -------- Custom camera instructions -------- -------- */
 
 	consteval auto LerpCamPos(Vector3_16 dest, uint8_t smoothness)
