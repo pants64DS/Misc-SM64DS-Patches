@@ -302,11 +302,23 @@ extern "C"
 	void Matrix3x3_SetRotationX(Matrix3x3& m, Fix12i sinTheta, Fix12i cosTheta) __attribute__((long_call, target("thumb"))); //Resets m to an X rotation matrix
 	void Matrix3x3_SetRotationY(Matrix3x3& m, Fix12i sinTheta, Fix12i cosTheta) __attribute__((long_call, target("thumb"))); //Resets m to a Y rotation matrix
 	void Matrix3x3_SetRotationZ(Matrix3x3& m, Fix12i sinTheta, Fix12i cosTheta) __attribute__((long_call, target("thumb"))); //Resets m to a Z rotation matrix
-	
-	void MultiStore_Int(int val, void* dest, int byteSize);
-	void MultiCopy_Int(void* source, void* dest, int byteSize);
-	
+
 	uint16_t Color_Interp(uint16_t* dummyArg, uint16_t startColor, uint16_t endColor, Fix12i time) __attribute__((const));
+
+	void CpuFill8(void* dest, int val, size_t size);
+	void CpuCopy8(const void* src, void* dest, size_t size);
+
+	void CpuFill16    (short val, void* dest, int numBytes);
+	void CpuFill32    (int   val, void* dest, int numBytes);
+	void CpuFill32Fast(int   val, void* dest, int numBytes);
+
+	void CpuCopy16    (const void* src, void* dest, int numBytes);
+	void CpuCopy32    (const void* src, void* dest, int numBytes);
+	void CpuCopy32Fast(const void* src, void* dest, int numBytes);
+
+	void Copy32Bytes(const void* src, void* dest);
+	void Copy36Bytes(const void* src, void* dest);
+	void Copy48Bytes(const void* src, void* dest);
 }
 
 inline int RandomInt() { return RandomIntInternal(&RNG_STATE); }

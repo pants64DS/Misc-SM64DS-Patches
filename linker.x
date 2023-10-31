@@ -2,19 +2,19 @@ OUTPUT_ARCH(arm)
 
 SECTIONS {
 	.text : {
-		*(.text)
-		*(.text.*)
+		KEEP(*(.text))
+		KEEP(*(.text.*))
 
-		*(.data)
-		*(.data.*)
+		KEEP(*(.data))
+		KEEP(*(.data.*))
 
-		*(.rodata)
-		*(.rodata.*)
+		KEEP(*(.rodata))
+		KEEP(*(.rodata.*))
 
-		*(.bss)
-		*(.bss.*)
+		KEEP(*(.bss))
+		KEEP(*(.bss.*))
 
-		*(COMMON)
-		*(COMMON.*)
+		KEEP(*(COMMON))
+		KEEP(*(COMMON.*))
 	}
 }
