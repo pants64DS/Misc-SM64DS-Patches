@@ -2,6 +2,7 @@
 #define UNALIGNED_INCLUDED
 
 #include "include/SM64DS_2.h"
+#include <cstring>
 #include <tuple>
 
 template<class T> concept UnalignedReadable =
@@ -16,10 +17,9 @@ namespace UnalignedImpl
 	inline T Read(const char* ptr)
 	{
 		static_assert(UnalignedReadable<T>);
-		T res;
 
-		for (std::size_t i = 0; i < sizeof(T); ++i)
-			reinterpret_cast<char*>(&res)[i] = ptr[i];
+		T res;
+		std::memcpy(&res, ptr, sizeof(res));
 
 		return res;
 	}
