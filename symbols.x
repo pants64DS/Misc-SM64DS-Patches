@@ -585,10 +585,6 @@ _ZN4Vram13StartPalWriteEv                                                       
 _ZN4Vram11EndTexWriteEv                                                           = 0x020569e0;
 _ZN4Vram7LoadTexEPhjj                                                             = 0x02056a50;
 _ZN4Vram13StartTexWriteEv                                                         = 0x02056b9c;
-
-
-MultiStore_Int                                                                    = 0x0205a47c;
-MultiCopy_Int                                                                     = 0x0205a490;
                                                                                                                 
 Vec3_InterpCubic                                                                  = 0x0208f670;
 _ZN14BezierPathIter7AdvanceEv                                                     = 0x0208f840;
@@ -674,14 +670,18 @@ Player_DoesStateEqual                                                           
 OBJ_UpdateObjectXYZSpeedBasedOnForwardSpeedAndDirection                           = 0x02010C5C;
 ObjectMessageIDToActualMessageID                                                  = 0x0201FC10;
 
-MultiStoreHalf                                                                    = 0x0205A448;
-MultiCopyHalf                                                                     = 0x0205A460;
-MultiStore32Bytes                                                                 = 0x0205A4A8;
-MultiCopy32Bytes                                                                  = 0x0205A4F4;
+Copy48BytesFixed                                                                  = 0x02056C1C;
+CpuFill16                                                                         = 0x0205A448;
+CpuCopy16                                                                         = 0x0205A460;
+CpuFill32                                                                         = 0x0205a47c;
+CpuCopy32                                                                         = 0x0205a490;
+CpuFill32Fast                                                                     = 0x0205A4A8;
+CpuCopy32Fast                                                                     = 0x0205A4F4;
 Copy32Bytes                                                                       = 0x0205A52C;
 Copy36Bytes                                                                       = 0x0205A548;
 Copy48Bytes                                                                       = 0x0205A564;
-Copy48BytesFixed                                                                  = 0x02056C1C;
+CpuFill8                                                                          = 0x0205a588;
+CpuCopy8                                                                          = 0x0205a61c;
 Geometry_WriteFogTable                                                            = 0x0202B6F0;
 Geometry_MatrixMultiply3x3                                                        = 0x0205536C;
 Vram::Map                                                                         = 0x02054C80;
