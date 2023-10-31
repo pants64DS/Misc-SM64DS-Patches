@@ -486,8 +486,8 @@ _ZNK7PathPtr7GetNodeER7Vector3j                                                 
 _ZNK7PathPtr8NumNodesEv                                                           = 0x0203ad60;
 /* _ZN7PathPtrC1Ev                                                                   = 0x0203ad74; not really needed */
 
-DecIfAbove0_Short                                                                 = 0x0203adbc;
-DecIfAbove0_Byte                                                                  = 0x0203add4;
+_Z15CountDownToZeroRt                                                             = 0x0203adbc;
+_Z15CountDownToZeroRh                                                             = 0x0203add4;
 _Z14ApproachLinearRsss                                                            = 0x0203adec;
 _Z14ApproachLinearRiii                                                            = 0x0203ae58;
 
@@ -823,24 +823,25 @@ _ZN7Clipper13Func_020156DCEv                                                    
 
 GLOBAL_CLIPPER                                                                    = 0x0209F43C;
 
+_ZN4cstd5atan2E5Fix12IiES1_                                                       = 0x0203B4DC;
+_ZN4cstd4sqrtEy                                                                   = 0x0203D744;
 _ZN4cstd3divEii                                                                   = 0x02052F4C;
 _ZN4cstd3modEii                                                                   = 0x02052EF4;
 _ZN4cstd4fdivEii                                                                  = 0x02053258;
 _ZN4cstd4fdivE5Fix12IiES1_                                                        = 0x02053258;
 _ZN4cstd4ldivEii                                                                  = 0x0205321C;
-_ZN4cstd4sqrtEy                                                                   = 0x0203D744;
 _ZN4cstd10fdiv_asyncE5Fix12IiE5Fix12IiE                                           = 0x02052FA4;
 _ZN4cstd11fdiv_resultEv                                                           = 0x020530CC;
 _ZN4cstd11ldiv_resultEv                                                           = 0x02053108;
 _ZN4cstd16reciprocal_asyncE5Fix12IiE                                              = 0x02053090;
-_ZN4cstd6strcmpEPKcPKc                                                            = 0x02070508;
-_ZN4cstd7strncpyEPcPKcj                                                           = 0x0207063C;
-_ZN4cstd6strchrEPKcc                                                              = 0x020704CC;
-_ZN4cstd6strlenEPKc                                                               = 0x02070788;
-_ZN4cstd14__builtin_trapEv                                                        = 0x0206DABC;
+
+strcmp                                                                            = 0x02070508;
+strncpy                                                                           = 0x0207063C;
+strchr                                                                            = 0x020704CC;
+strlen                                                                            = 0x02070788;
 _ZN4cstd8__assertEPKcPKcPKci                                                      = 0x0206CD44;
-_ZN4cstd5atan2E5Fix12IiES1_                                                       = 0x0203B4DC;
-_ZN4cstd3absEi                                                                    = 0x0206DF84;
+_ZN4cstd14__builtin_trapEv                                                        = 0x0206DABC;
+abs                                                                               = 0x0206DF84;
 
 SINE_TABLE                                                                        = 0x02082214;
 ATAN_TABLE                                                                        = 0x020994E0;

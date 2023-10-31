@@ -23,14 +23,11 @@ namespace cstd
 	int64_t ldiv(int numerator, int denominator); // returns a Q32 number
 }
 
-extern "C"
-{
-	uint16_t DecIfAbove0_Short(uint16_t& counter); // returns the counter's new value
-	uint8_t DecIfAbove0_Byte(uint8_t& counter);    // returns the counter's new value
-}
-
 bool ApproachLinear(short& counter, short dest, short step); // returns whether the counter reached its destination
 bool ApproachLinear(int& counter,   int dest,   int step);   // returns whether the counter reached its destination
+
+uint16_t CountDownToZero(uint16_t& counter); // returns the counter's new value
+uint8_t  CountDownToZero(uint8_t&  counter); // returns the counter's new value
 
 struct AsRaw {} constexpr as_raw;
 
@@ -196,12 +193,6 @@ namespace cstd
 	inline Fix12i sqrt(Fix12i x) { return Fix12i(sqrt(static_cast<uint64_t>(x.val) << 12), as_raw); }
 
 	short atan2(Fix12i y, Fix12i x); //atan2 function, what about 0x020538b8?
-	int abs(int x);
-
-	int strcmp(const char* str1, const char* str2); //returns 0 if equal, a positive number if str1 comes after str2, and a negative number otherwise
-	char* strncpy(char* dest, const char* src, unsigned count);	//Copies n bytes from src to dest and returns a pointer to dest
-	char* strchr(const char* str, char c); //Searches for c in str and returns a pointer to the first occurence, or 0 if c could not be found
-	unsigned strlen(const char* str); //Returns the length of the string or -1 if no null-terminator has been found
 }
 
 struct UnknownStruct
@@ -255,6 +246,7 @@ extern "C"
 	
 	int ApproachAngle(short& angle, short targetAngle, int invFactor, int maxDelta = 180_deg, int minDelta = 0);
 	uint16_t AngleDiff(short ang0, short ang1) __attribute__((const));
+
 	void Vec3_RotateYAndTranslate(Vector3& res, const Vector3& translation, short angY, const Vector3& v); //res and v cannot alias.
 	short Vec3_VertAngle(const Vector3& v1, const Vector3& v0) __attribute__((pure));
 	short Vec3_HorzAngle(const Vector3& v0, const Vector3& v1) __attribute__((pure));
@@ -319,6 +311,13 @@ extern "C"
 	void Copy32Bytes(const void* src, void* dest);
 	void Copy36Bytes(const void* src, void* dest);
 	void Copy48Bytes(const void* src, void* dest);
+
+	// C library functions
+	int abs(int x);
+	int strcmp(const char* str1, const char* str2); // returns 0 if equal, a positive number if str1 comes after str2, and a negative number otherwise
+	char* strncpy(char* dest, const char* src, unsigned count);	// Copies n bytes from src to dest and returns a pointer to dest
+	char* strchr(const char* str, int c); // Searches for c in str and returns a pointer to the first occurence, or 0 if c could not be found
+	unsigned strlen(const char* str); // Returns the length of the string
 }
 
 inline int RandomInt() { return RandomIntInternal(&RNG_STATE); }
