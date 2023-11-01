@@ -95,6 +95,12 @@ IMPLEMENT(SetEntranceMode)
 	entranceMode = *params;
 }
 
+IMPLEMENT(DeactivatePlayer<>)
+(Player& player, const char* params, short minFrame, short maxFrame)
+{
+	player.flags &= ~(Actor::BEHAVIOR_DURING_STAR_SPAWNING | Actor::BEHAVIOR_DURING_CUTSCENES);
+}
+
 asm(R"(
 nsub_0200e664:
 	ldr   r1, =entranceMode

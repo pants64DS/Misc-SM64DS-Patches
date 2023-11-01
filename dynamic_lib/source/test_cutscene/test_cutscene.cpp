@@ -56,6 +56,9 @@ constinit auto script = NewScript().
 	HurtPlayer  <Luigi>({0, 254, 0}, 2, 100._f)       (458).
 	BouncePlayer<Mario>(50._f)                        (470).
 
+	DeactivatePlayer<Mario>()                         (480).
+	ActivatePlayer  <Mario>()                         (540).
+
 	Print("\nMario's position: ") (500). PrintPlayerPos<Mario>() (500).
 	Print("\nLuigi's position: ") (510). PrintPlayerPos<Luigi>() (510).
 	Print("\nWario's position: ") (520). PrintPlayerPos<Wario>() (520).
