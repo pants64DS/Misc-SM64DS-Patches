@@ -5,7 +5,7 @@
 
 struct InfiniteFloor : public Actor, public MeshColliderBase
 {
-	static constexpr uint16_t staticActorID = 561;
+	static constexpr uint16_t staticActorID = 562;
 	static SpawnInfo spawnData;
 	const CLPS& GetCLPS() const;
 
@@ -16,9 +16,9 @@ struct InfiniteFloor : public Actor, public MeshColliderBase
 	virtual void GetSurfaceInfo(short triangleID, SurfaceInfo& res) final override;
 	virtual void GetNormal(short triangleID, Vector3& res) final override;
 	virtual void GetTriangleOrigin(short triangleID, Vector3& res) final override;
-	virtual bool DetectClsn(RaycastGround& ray) final override;
-	virtual bool DetectClsn(RaycastLine& ray) final override;
-	virtual bool DetectClsn(SphereClsn& sphere) final override;
+	virtual unsigned DetectClsn(RaycastGround& ray) final override;
+	virtual unsigned DetectClsn(RaycastLine& ray) final override;
+	virtual unsigned DetectClsn(SphereClsn& sphere) final override;
 };
 
 #endif

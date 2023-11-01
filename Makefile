@@ -36,7 +36,7 @@ export LD      := $(PREFIX)ld
 #---------------------------------------------------------------------------------
 TARGET   := newcode
 BUILD    := build
-SOURCES  := source
+SOURCES  := source glibc
 INCLUDES := ../dynamic_lib/source ../source ..
 
 ARCHFLAGS := -march=armv5te -mtune=arm946e-s
@@ -44,7 +44,7 @@ ARCHFLAGS := -march=armv5te -mtune=arm946e-s
 CFLAGS := -Wall -Wextra -Werror -Wno-unused-parameter -Wno-narrowing \
 	-Wno-parentheses -Wno-volatile -Wno-invalid-offsetof -Wno-char-subscripts -Wno-trigraphs \
 	-Os $(ARCHFLAGS) -fomit-frame-pointer -fwrapv \
-	$(INCLUDE) -DARM9 -nodefaultlibs -fno-builtin -nostdlib -ffreestanding -c
+	$(INCLUDE) -DARM9 -ffreestanding -c
 
 CXXFLAGS := $(CFLAGS) -std=c++23 -fno-exceptions -fno-rtti -fno-threadsafe-statics -faligned-new=4
 
