@@ -19,6 +19,11 @@ constinit auto script = NewScript().
 
 	ActivatePlayer<Mario>() (1).
 	ActivatePlayer<Luigi>() (11).
+
+	SetCamAngleZ(-20) (1).
+	RotateCamZ(-1_deg) (30, 600).
+	ExpDecayCamAngleZ(0, 10, 180_deg, 5_deg) (600, -1).
+
 	ActivatePlayer<Wario>() (21).
 	ActivatePlayer<Yoshi>() (31).
 
@@ -69,6 +74,7 @@ constinit auto script = NewScript().
 	Print("\n") (560).
 
 	EnableAmbientSoundEffects() (600).
+	SetCamShakeIntensity(10_deg)(600).
 
 	Print("\nDone!\n") (630).
 

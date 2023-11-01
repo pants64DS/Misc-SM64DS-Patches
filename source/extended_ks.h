@@ -64,7 +64,7 @@ public:
 	}
 
 	template<CharID Char = Any>
-	consteval auto ExpDecayPlayerAngleY(short targetAngle, int invFactor, int maxDelta = 180_deg, int minDelta = 0)
+	consteval auto ExpDecayPlayerAngleY(short targetAngle, uint16_t invFactor, uint16_t maxDelta = 180_deg, uint16_t minDelta = 0)
 	{
 		return PlayerInstruction<Char, 18>(targetAngle, invFactor, maxDelta, minDelta);
 	}
@@ -162,6 +162,26 @@ public:
 	consteval auto Print(const char (&string)[length])
 	{
 		return CamInstruction<45>(std::to_array<const char, length>(string));
+	}
+
+	consteval auto SetCamAngleZ(short zAngle)
+	{
+		return CamInstruction<46>(zAngle);
+	}
+
+	consteval auto RotateCamZ(short zAngleDiff)
+	{
+		return CamInstruction<47>(zAngleDiff);
+	}
+
+	consteval auto ExpDecayCamAngleZ(short targetAngle, uint16_t invFactor, uint16_t maxDelta = 180_deg, uint16_t minDelta = 0)
+	{
+		return CamInstruction<48>(targetAngle, invFactor, maxDelta, minDelta);
+	}
+
+	consteval auto SetCamShakeIntensity(short zAngleDiff)
+	{
+		return CamInstruction<49>(zAngleDiff);
 	}
 };
 
