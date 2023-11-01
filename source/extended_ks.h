@@ -110,6 +110,12 @@ public:
 		return PlayerInstruction<Any, 25>(entranceMode);
 	}
 
+	template<CharID Char = Any>
+	consteval auto DeactivatePlayer()
+	{
+		return PlayerInstruction<Char, 26>();
+	}
+
 	/* -------- -------- Custom camera instructions -------- -------- */
 
 	consteval auto LerpCamPos(Vector3_16 dest, uint8_t smoothness)

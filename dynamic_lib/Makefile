@@ -36,7 +36,7 @@ export LD      := $(PREFIX)ld
 #---------------------------------------------------------------------------------
 TARGET   := newcode
 BUILD    := build
-SOURCES  := ../glibc source/infinite_floor
+SOURCES  := ../glibc source/test_cutscene
 INCLUDES := ../source ..
 
 ARCHFLAGS := -march=armv5te -mtune=arm946e-s
