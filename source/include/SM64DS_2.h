@@ -344,14 +344,16 @@ struct Camera : public View // internal name: dCamera
 	unsigned unk16c;
 	unsigned unk170;
 	unsigned unk174;
-	uint16_t unk178;
-	Vector3_16 angle;
+	short zAngle;
+	Vector3_16 angle; // probably not really except for y
 	short eightDirAngleY;
 	short eightDirStartAngle;
 	short eightDirDeltaAngle;
 	short unk186;
-	unsigned unk188;
-	unsigned unk18c;
+	uint16_t unk188;
+	short zShakeAngleOscillator;
+	short zShakeMaxAngle;
+	uint16_t unk18e;
 	unsigned unk190;
 	uint16_t unk194;
 	uint16_t unk196;

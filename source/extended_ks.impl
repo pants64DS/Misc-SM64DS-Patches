@@ -29,13 +29,19 @@ IMPLEMENT(TurnPlayer<>)
 }
 
 
+static void CallApproachAngle(short& angle, const char* params)
+{
+	const auto [targetAngle, invFactor, maxDelta, minDelta]
+		= ReadUnaligned<short, uint16_t, uint16_t, uint16_t>(params);
+
+	ApproachAngle(angle, targetAngle, invFactor, maxDelta, minDelta);
+}
+
+
 IMPLEMENT(ExpDecayPlayerAngleY<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
-	const auto [targetAngle, invFactor, maxDelta, minDelta]
-		= ReadUnaligned<short, int, int, int>(params);
-
-	ApproachAngle(player.ang.y, targetAngle, invFactor, maxDelta, minDelta);
+	CallApproachAngle(player.ang.y, params);
 }
 
 
@@ -180,4 +186,28 @@ IMPLEMENT(Print<1>)
 (Camera& cam, const char* params, short minFrame, short maxFrame)
 {
 	cout << params;
+}
+
+IMPLEMENT(SetCamAngleZ)
+(Camera& cam, const char* params, short minFrame, short maxFrame)
+{
+	cam.zAngle = ReadUnaligned<short>(params);
+}
+
+IMPLEMENT(RotateCamZ)
+(Camera& cam, const char* params, short minFrame, short maxFrame)
+{
+	cam.zAngle += ReadUnaligned<short>(params);
+}
+
+IMPLEMENT(ExpDecayCamAngleZ)
+(Camera& cam, const char* params, short minFrame, short maxFrame)
+{
+	CallApproachAngle(cam.zAngle, params);
+}
+
+IMPLEMENT(SetCamShakeIntensity)
+(Camera& cam, const char* params, short minFrame, short maxFrame)
+{
+	cam.zShakeMaxAngle = ReadUnaligned<short>(params);
 }
