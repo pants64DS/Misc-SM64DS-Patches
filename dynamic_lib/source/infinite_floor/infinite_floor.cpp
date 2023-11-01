@@ -43,27 +43,27 @@ void InfiniteFloor::GetTriangleOrigin(short triangleID, Vector3& res)
 	res = this->pos;
 }
 
-bool InfiniteFloor::DetectClsn(RaycastGround& ray)
+unsigned InfiniteFloor::DetectClsn(RaycastGround& ray)
 {
-	if (ray.ShouldPassThrough(GetCLPS(), false)) return false;
+	if (ray.ShouldPassThrough(GetCLPS(), false)) return 0;
 
-	if (ray.pos.y < this->pos.y) return false;
-	if (ray.hadCollision && ray.clsnPosY > this->pos.y) return false;
+	if (ray.pos.y < this->pos.y) return 0;
+	if (ray.hadCollision && ray.clsnPosY > this->pos.y) return 0;
 
 	GetSurfaceInfo(0, ray.result.surfaceInfo);
 	ray.result.triangleID = 0;
 	ray.clsnPosY = this->pos.y;
 	ray.hadCollision = true;
 
-	return true;
+	return 1;
 }
 
-bool InfiniteFloor::DetectClsn(RaycastLine& ray)
+unsigned InfiniteFloor::DetectClsn(RaycastLine& ray)
 {
-	if (ray.ShouldPassThrough(GetCLPS(), false)) return false;
+	if (ray.ShouldPassThrough(GetCLPS(), false)) return 0;
 
-	if (ray.line.pos0.y < this->pos.y) return false;
-	if (ray.line.pos1.y > this->pos.y) return false;
+	if (ray.line.pos0.y < this->pos.y) return 0;
+	if (ray.line.pos1.y > this->pos.y) return 0;
 
 	const Vector3 v = ray.line.pos1 - ray.line.pos0;
 	Vector3 newClsnPos;
@@ -80,22 +80,22 @@ bool InfiniteFloor::DetectClsn(RaycastLine& ray)
 	}
 
 	if (ray.line.pos0.Dist(ray.clsnPos) < ray.line.pos0.Dist(newClsnPos))
-		return false;
+		return 0;
 
 	GetSurfaceInfo(0, ray.result.surfaceInfo);
 	ray.result.triangleID = 0;
 	ray.hadCollision = true;
 	ray.clsnPos = newClsnPos;
 
-	return true;
+	return 1;
 }
 
-bool InfiniteFloor::DetectClsn(SphereClsn& sphere)
+unsigned InfiniteFloor::DetectClsn(SphereClsn& sphere)
 {
-	if (sphere.ShouldPassThrough(GetCLPS(), false)) return false;
+	if (sphere.ShouldPassThrough(GetCLPS(), false)) return 0;
 
-	if (!(sphere.pos.y - this->pos.y < sphere.radius)) return false;
-	if (!(sphere.pos.y - this->pos.y > -5._f)) return false;
+	if (!(sphere.pos.y - this->pos.y < sphere.radius)) return 0;
+	if (!(sphere.pos.y - this->pos.y > -5._f)) return 0;
 
 	GetSurfaceInfo(0, sphere.result.surfaceInfo);
 	sphere.result.triangleID = 0;
@@ -118,7 +118,7 @@ bool InfiniteFloor::DetectClsn(SphereClsn& sphere)
 
 	sphere.storedNormal = Vector3::Temp(0._f, 1._f, 0._f);
 
-	return true;
+	return 1;
 }
 
 void init()
