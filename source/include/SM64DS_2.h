@@ -1209,10 +1209,6 @@ extern "C"
 	extern unsigned AMBIENT_SOUND_EFFECTS_ENABLED;
 
 	short GetAngleToCamera(unsigned playerID = 0);
-
-	bool LoadOverlay(bool isArm7, unsigned ovID);
-	
-	bool LoadArchive(int archiveID);
 	
 	char SublevelToLevel(char levelID);
 	int NumStars();

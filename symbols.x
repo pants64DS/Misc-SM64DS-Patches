@@ -180,8 +180,8 @@ _ZN5Actor10PoofDustAtERK7Vector3                                                
 _ZN5Actor8PoofDustEv                                                              = 0x0200fe3c;
 UnloadBlueCoinModel                                                               = 0x0200fe70;
 LoadBlueCoinModel                                                                 = 0x0200fe9c;
-_ZN5Actor19UntrackAndSpawnStarEjjRK7Vector3j                                      = 0x0200ff14;
-_ZN5Actor11UntrackStarEv                                                          = 0x0200ff60;
+_ZN5Actor19UntrackAndSpawnStarERajRK7Vector3j                                     = 0x0200ff14;
+_ZN5Actor11UntrackStarERa                                                         = 0x0200ff60;
 _ZN5Actor9TrackStarEjj                                                            = 0x0200ff94;
 _ZN5Actor11SpawnNumberERK7Vector3jbtPS_                                           = 0x02010044;
 _ZN5Actor25OnAimedAtWithEggReturnVecEv                                            = 0x020100dc;
@@ -351,7 +351,9 @@ UnloadObjBankOverlay                                                            
 LoadObjBankOverlay                                                                = 0x02018028;
 LoadFile                                                                          = 0x0201816c;
 LoadArchive                                                                       = 0x020188a8;
+InitFileSystem                                                                    = 0x02018aa4;
 LoadOverlay                                                                       = 0x02018ad0;
+LoadOverlayInfo                                                                   = 0x02018c00;
 
 Crash                                                                             = 0x02019740;
 
@@ -1151,7 +1153,7 @@ _ZN6Player17ST_HEADSTAND_JUMPE     = 0x02110724;
 KS_PLAYER_INSTRUCTIONS                                                            = 0x02110794;
 
 
-UNUSED_RAM                                                                        = 0x023C4000;
+UNUSED_RAM_REGION                                                                 = 0x023C4000;
 
 _ZN9ActorBase7ProcessEMS_FivEMS_FbvEMS_FvjE = 0x02043c88;
 
