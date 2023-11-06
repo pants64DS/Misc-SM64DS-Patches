@@ -210,11 +210,9 @@ struct Actor : public ActorBase				//internal name: dActor
 	void PoofDustAt(const Vector3& vec);
 	void PoofDust(); //calls the two above function
 
-	[[deprecated("seems to have a second parameter, don't use until fixed")]]
-	void UntrackStar(char& starID);
-
-	Actor* UntrackAndSpawnStar(char& trackStarID, unsigned starID, const Vector3& spawnPos, unsigned howToSpawnStar);
-	unsigned TrackStar(unsigned starID, unsigned starType); //starType=1: silver star, 2: star //returns star ID or 0xff if starID != STAR_ID
+	void UntrackStar(int8_t& starID);
+	Actor* UntrackAndSpawnStar(int8_t& trackStarID, unsigned starID, const Vector3& spawnPos, unsigned howToSpawnStar);
+	int8_t TrackStar(unsigned starID, unsigned starType); //starType=1: silver star, 2: star //returns star ID or 0xff if starID != STAR_ID
 
 	void Earthquake(const Vector3& source, Fix12i magnitude);
 	short ReflectAngle(Fix12i normalX, Fix12i normalZ, short angToReflect);

@@ -210,6 +210,19 @@ struct UnknownStruct
 	unsigned unk20;
 };
 
+struct OverlayInfo
+{
+	unsigned ovID;
+	void* loadAddress;
+	unsigned loadSize;
+	unsigned bssSize;
+	void (*staticInitializerBegin)(); // a pointer to the first one
+	void (*staticInitializerEnd)(); // one past the last one, do not dereference
+	unsigned fileID;
+	unsigned unk1c;
+	unsigned unk20; // not from the overlay table, but usually zero
+};
+
 struct Vector3;
 struct Vector3_16;
 struct Matrix4x3;
@@ -222,7 +235,7 @@ extern "C"
 	extern char DIGIT_ENC_ARR[10];
 
 	extern uint16_t HEALTH_ARR[4];
-	extern int UNUSED_RAM[0xec00];
+	extern char UNUSED_RAM_REGION[0x023fc000 - 0x023c4000];
 	extern UnknownStruct UNKNOWN_ARR[4];
 	
 	extern int RNG_STATE; //x => x * 0x0019660d + 0x3c6ef35f
@@ -233,10 +246,15 @@ extern "C"
 
 	extern const Fix12s SINE_TABLE[0x2000];
 	extern const Fix12s ATAN_TABLE[0x400];
-	
+
+	void InitFileSystem();
+	bool LoadOverlay(bool isArm7, unsigned ovID);
+	bool LoadOverlayInfo(OverlayInfo& res, bool isArm7, unsigned ovID);
+	bool LoadArchive(int archiveID);
+	char* LoadFile	(int ov0FileID);
+
 	void UnloadObjBankOverlay(int ovID);
 	bool LoadObjBankOverlay(int ovID);
-	char* LoadFile	(int ov0FileID);
 	
 	[[noreturn]] void Crash();
 
