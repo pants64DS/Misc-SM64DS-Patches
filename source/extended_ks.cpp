@@ -144,6 +144,14 @@ void repl_0200ed4c(Camera& cam, char* instruction, short minFrame, short maxFram
 }
 
 asm(R"(
+@ Check if the camera exists before updating the script from RunKuppaScript
+repl_0200ef5c:
+	ldr   r0, =CAMERA
+	ldr   r0, [r0]
+	cmp   r0, #0
+	bne   0x0200e8d4
+	b     0x0200ef60
+
 @ Support player instructions that don't refer to a specific character
 nsub_0200ed70:
 	cmp   r0, #0xff

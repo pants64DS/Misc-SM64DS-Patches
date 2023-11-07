@@ -3,24 +3,24 @@
 
 constinit auto script = NewScript().
 
-	SetEntranceMode(2) (1).
-	SetPlayerPos<Mario>(-1187, 500, 6167) (1).
+	SetEntranceMode(2) (0).
+	SetPlayerPos<Mario>(-1187, 500, 6167) (0).
 
-	SetEntranceMode(0) (1).
-	SetPlayerPos<Luigi>(-1487, 254, 6467) (1).
+	SetEntranceMode(0) (0).
+	SetPlayerPos<Luigi>(-1487, 254, 6467) (0).
 
-	SetEntranceMode(4) (1).
-	SetPlayerPos<Wario>(-1287, 1000, 6767) (1).
+	SetEntranceMode(4) (0).
+	SetPlayerPos<Wario>(-1287, 1000, 6767) (0).
 
-	SetEntranceMode(10) (1).
-	SetPlayerPos<Yoshi>( -987, 1000, 6567) (1).
+	SetEntranceMode(10) (0).
+	SetPlayerPos<Yoshi>( -987, 1000, 6567) (0).
 
-	DisableAmbientSoundEffects() (1).
+	DisableAmbientSoundEffects() (0).
 
-	ActivatePlayer<Mario>() (1).
+	ActivatePlayer<Mario>() (0).
 	ActivatePlayer<Luigi>() (11).
 
-	SetCamAngleZ(-20) (1).
+	SetCamAngleZ(-20) (0).
 	RotateCamZ(-1_deg) (30, 600).
 	ExpDecayCamAngleZ(0, 10, 180_deg, 5_deg) (600, -1).
 
