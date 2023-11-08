@@ -194,11 +194,64 @@ This works just like before, but saves some space and avoids duplicating code.
 
 ### Overloading
 
-[todo]
+Let's say I wanted to call `SetPlayerPos` in a script while using a variable for the position vector:
 
-### Implementation by instruction ID
+```cpp
+constexpr Vector3_16 spawnPos = {-1200, 254, 6800};
 
-[todo]
+constinit auto script =
+	NewScript().
+	SetPlayerPos(spawnPos) (0).
+	End();
+```
+
+Because the interface function for `SetPlayerPos` takes three `short` parameters instead of a single `Vector3_16` parameter, this wouldn't work yet. To make it work, the interface function needs to be overloaded:
+
+```cpp
+template<CharID Char = Any>
+consteval auto SetPlayerPos(Vector3_16 pos)
+{
+	return PlayerInstruction<Char, 14>(pos);
+}
+
+template<CharID Char = Any>
+consteval auto SetPlayerPos(short x, short y, short z)
+{
+	return PlayerInstruction<Char, 14>(x, y, z);
+}
+```
+
+This particular instruction uses the same ID in both overloads, but it's also possible to use a different one in each of them. In the latter case, each overload would call a different implementation function. Because of this, the implementation functions of all overloaded instructions need to be implemented a bit differently from others. For example, the implementation function for `SetPlayerPos` would need to be changed to this:
+
+```cpp
+IMPLEMENT_OVERLOAD(SetPlayerPos, Vector3_16)
+(Player& player, const char* params, short minFrame, short maxFrame)
+{
+	player.pos = ReadUnaligned<Vector3_16>(params);
+}
+```
+
+The `IMPLEMENT_OVERLOAD` macro is used instead of `IMPLEMENT`, and the name of the interface function is followed by the parameter types of the intended overload. Since both overloads use the same ID, they must both share the same implementation function. If both of them instead had their own instruction IDs, they would need to have two different implementation functions, one defined with `IMPLEMENT_OVERLOAD(SetPlayerPos, Vector3_16)` and another with `IMPLEMENT_OVERLOAD(SetPlayerPos, short, short, short)`.
+
+### Implementation by ID
+
+I don't have an example of where this would be particularly useful yet, but it's also possible to specify the ID directly in the implementation function instead of deducing it from an interface function. This can be done with the `IMPLEMENT_ID` macro:
+
+```cpp
+IMPLEMENT_ID(Player, 32) // Implements player instruction 32
+(Player& player, const char* params, short minFrame, short maxFrame)
+{
+	// ...
+}
+
+IMPLEMENT_ID(Camera, 64) // Implements camera instruction 64
+(Camera& cam, const char* params, short minFrame, short maxFrame)
+{
+	// ...
+}
+```
+
+I wouldn't recommend this for most instructions since it requires updating the instruction ID in [extended_ks.impl](source/extended_ks.impl) every time it's changed in [extended_ks.h](source/extended_ks.h) and it's easy to forget that.
 
 ## Why only player and camera instructions?
 
