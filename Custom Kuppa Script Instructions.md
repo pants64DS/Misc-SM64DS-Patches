@@ -253,7 +253,7 @@ IMPLEMENT_ID(Camera, 64) // Implements camera instruction 64
 
 I wouldn't recommend this for most instructions since it requires updating the ID in [extended_ks.impl](source/extended_ks.impl) every time it's changed in [extended_ks.h](source/extended_ks.h) and it's easy to forget that.
 
-## Other effects of custom instruction patch
+## Other effects of the custom instruction patch
 
 Besides enabling custom instructions, the patch in [extended_ks.cpp](source/extended_ks.cpp) also has the following effects.
 
