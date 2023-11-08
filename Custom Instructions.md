@@ -4,13 +4,16 @@ To define a custom instruction, you need to define its *interface function* insi
 
 ## The two types of custom instructions
 
-Each custom instruction defined using this system must be either a *player instruction* or a *camera instruction*. (See [this](<Custom Instructions.md#why-only-player-and-camera-instructions>) for why that is.) However, that doesn't mean that every new instruction has to deal with a player (i.e. a playable character) or the camera. Both player and camera instructions can ignore the player/camera they're given as a parameter and do anything the programmer wants, but I recommend using camera instructions for anything that doesn't involve a player to avoid spawning one by accident.
+Each custom instruction defined using this system must be either a *player instruction* or a *camera instruction*. (See [this](#why-only-player-and-camera-instructions) for why that is.) However, that doesn't mean that every new instruction has to deal with a player (i.e. a playable character) or the camera. Both player and camera instructions can ignore the player/camera they're given as a parameter and do anything the programmer wants, but I recommend using camera instructions for anything that doesn't involve a player to avoid spawning one by accident.
 
-In the vanilla game, each player instruction must always specify the character it affects. If that character doesn't already exist in the level, it's spawned in for the duration of the cutscene. This is a problem for cutscenes that just want to do something with the current player character, regardless of who that happens to be. To solve this issue, [extended_ks.cpp](source/extended_ks.cpp) includes a patch that allows player instructions to leave the character unspecified, in which case the instruction will affect the character currently being played as. This even works with vanilla instructions, but [extended_ks.h](source/extended_ks.h) must be included to enable it.
+In the vanilla game, each player instruction must always specify the character it affects. If that character doesn't already exist in the level, it's spawned in for the duration of the cutscene. This is a problem for cutscenes that just want to do something with the current player character, regardless of who that happens to be. To solve this issue, [extended_ks.cpp](source/extended_ks.cpp) includes a patch that allows player instructions to leave the character unspecified, which makes the instruction affect the character currently being played as. This even works with vanilla instructions, but [extended_ks.h](source/extended_ks.h) must be included to enable it.
 
 ## Interface functions
 
+### For camera instructions
+
 Here's an example of what an interface function in the `ExtendedScriptCompiler` class might look like:
+
 ```cpp
 consteval auto SetCamAngleZ(short zAngle)
 {
@@ -18,11 +21,25 @@ consteval auto SetCamAngleZ(short zAngle)
 }
 ```
 
-Because Kuppa Scripts are compiled at compile time, all interface functions must be declared with the `consteval` keyword. The `auto` keyword after that indicates that the return type of the function should be deduced based on whatever it returns. This instruction has a single parameter called `zAngle`, which represents the new angle of the camera along its z-axis. It's expected to be in binary angle units, where 0x4000 is equivalent to 90 degrees. The type of the parameter is `short` because 16 bits are enough to represent all possible angles in these units.
+Because Kuppa Scripts are compiled at compile time (duh), all interface functions must be declared with the `consteval` keyword. The `auto` keyword after that indicates that the return type of the function should be deduced based on whatever it returns, and should be used in all interface functions. This instruction has a single parameter called `zAngle`, which represents the new angle of the camera along its z-axis. It's expected to be in binary angle units, where 0x4000 is equivalent to 90 degrees. The type of the parameter is `short` because 16 bits are enough to represent all possible angles in these units.
 
-Because this interface function is for a camera instruction, it calls the `CamInstruction` function template and returns the object it returns. The number 46 inside the angle brackets is the *camera instruction ID* of this instruction, and it's used by the system to call the right implementation function. The vanilla game has 39 camera instructions, so the ID for all custom camera instructions must be at least 39.
+Since this interface function is for a camera instruction, it calls the `CamInstruction` function template and returns the object it returns. The number 46 inside the angle brackets is the *camera instruction ID* of this instruction, and it's used by the system to call the right implementation function. The vanilla game has 39 camera instructions, so the ID for all custom camera instructions must be at least 39.
+
+Now that our `SetCamAngleZ` instruction has an interface function, it may be called like this in a C++-embedded Kuppa Script:
+
+```cpp
+constinit auto script =
+	NewScript().
+	SetCamAngleZ(60_deg) (100).
+	End();
+```
+
+If implemented properly, it would set the z-angle of the camera to 60 degrees at frame 100. The `_deg`-suffix automatically converts the angle from degrees to binary angle units.
+
+### For player instructions
 
 The interface function of a player instruction looks similar, but slightly different:
+
 ```cpp
 template<CharID Char = Any>
 consteval auto SetPlayerPos(short x, short y, short z)
@@ -31,13 +48,84 @@ consteval auto SetPlayerPos(short x, short y, short z)
 }
 ```
 
-Unlike the previous one, this interface function is actually a function template since character (`Mario`, `Luigi`, `Wario` or `Yoshi`) is specified as a template argument. The default argument is `Any`, which leaves the character unspecified as described above. The coordinates are 16-bit integers, which is enough to represent any position an object can be given in SM64DSe. To convert the coordinates in SM64DSe to these ones, divide them by 1000 or simply remove the decimal point.
+Unlike the previous one, this interface function is actually a function template since the character (`Mario`, `Luigi`, `Wario`, `Yoshi` or `Any`) is given as a template argument. The default argument is `Any`, which leaves the character unspecified. The parameters are 16-bit integers, which is enough to represent any position an object can be given in SM64DSe. To convert the coordinates in SM64DSe to these ones, divide them by 1000 or simply remove the decimal point.
 
-Just like the interface function for the camera instruction called `CamInstruction` and returned its value, this one calls `PlayerInstruction` and returns its value. Along with the *player instruction ID*, the specified (or unspecified) character is given to it as a template argument.
+Just like the interface function for the camera instruction called `CamInstruction` and returned its value, this one calls `PlayerInstruction` and returns its value. Along with the *player instruction ID*, the specified (or unspecified) character `Char` is given to it as a template argument. Both `PlayerInstruction` and `CamInstruction` can be called with any number of function arguments of any number of types, as long as those types can be converted to byte arrays using [`std::bit_cast`](https://en.cppreference.com/w/cpp/numeric/bit_cast).
 
-Both `PlayerInstruction` and `CamInstruction` can be called with any number of function arguments of any number of types, as long as those types can be converted into byte arrays using [`std::bit_cast`](https://en.cppreference.com/w/cpp/numeric/bit_cast).
+Our `SetPlayerPos` instruction could be called in a C++-embedded Kuppa Script in the following ways:
+
+```cpp
+constinit auto script =
+	NewScript().
+	SetPlayerPos       (-3593, 3662, -5462) (100). // Sets the position of the current player
+	SetPlayerPos<Luigi>(-3030, 3095,  -905) (200). // Sets the position of Luigi specifically, and spawns him if necessary
+	End();
+```
+
+### Default arguments
+
+Like most functions in C++, instruction interface functions can use default arguments:
+
+```cpp
+consteval auto ExpDecayCamAngleZ(short targetAngle, uint16_t invFactor, uint16_t maxDelta = 180_deg, uint16_t minDelta = 0)
+{
+	return CamInstruction<48>(targetAngle, invFactor, maxDelta, minDelta);
+}
+
+template<CharID Char = Any> // They also work in function templates!
+consteval auto ExpDecayPlayerAngleY(short targetAngle, uint16_t invFactor, uint16_t maxDelta = 180_deg, uint16_t minDelta = 0)
+{
+	return PlayerInstruction<Char, 18>(targetAngle, invFactor, maxDelta, minDelta);
+}
+```
+
+Parameters with default arguments don't need to be given arguments when calling the instruction in a script:
+
+```cpp
+constinit auto script =
+	NewScript().
+	ExpDecayCamAngleZ(-90_deg, 10, 5_deg) (0, 99).   // maxDelta = 5_deg, minDelta = 0
+	ExpDecayPlayerAngleY(90_deg, 20)      (100, -1). // maxDelta = 180_deg, minDelta = 0
+	End();
+```
 
 ## Implementation functions
+
+### For camera instructions
+
+The `SetCamAngleZ` instruction from the last section can be implemented by adding the following code to [extended_ks.impl](source/extended_ks.impl):
+```cpp
+IMPLEMENT(SetCamAngleZ)
+(Camera& cam, const char* params, short minFrame, short maxFrame)
+{
+	cam.zAngle = ReadUnaligned<short>(params);
+}
+```
+The `IMPLEMENT` macro specifies the name of the instruction being implemented, which is `SetCamAngleZ` in this case. That's followed by the parameter list of the implementation function, which should be the same for all camera instructions. It contains a reference to the camera, a pointer to a byte array, and the minimum and maximum frame numbers on which the instruction is run. The byte array pointed by `params` contains all parameters given to the instruction, packed right next to each other without any padding between them. In this case, however, there is only one parameter and it's of type `short`. It's read from the buffer using the `ReadUnaligned` function template from [unaligned.h](source/unaligned.h), which can be used to read parameters of (almost) any type. The parameter read from the buffer is assigned to the z-angle of the camera, like the name of the instruction suggests.
+
+### For player instructions
+
+Likewise, the `SetPlayerPos` instruction from the previous section can be implemented like this:
+```cpp
+IMPLEMENT(SetPlayerPos<>)
+(Player& player, const char* params, short minFrame, short maxFrame)
+{
+	player.pos = ReadUnaligned<Vector3_16>(params);
+}
+```
+Because the interface function is a function template, its name given to the `IMPLEMENT` macro needs to be followed by a template argument list in angle brackets. In this case the list is empty because the only template parameter has a default argument.
+
+The function parameter list is the same as the one for camera instructions, except for the first parameter which is a reference to a player instead of the camera. Even though the parameters are declared as three `short`s in the interface function, they can be read as a `Vector3_16`, a struct of three `short`s. When the `ReadUnaligned` function template is used to read a `Vector3`, a `Vector3_16` or a `Vector3_16f`, its return type is a lazy-evaluated proxy for `Vector3`. (See `Vector3::Proxy` in [SM64DS_Common.h](source/include/SM64DS_Common.h).) With all other types, the return type would be the same as the template argument, but this specialization for vectors makes it easier to read them while avoiding unnecessary copies. The type of `player.pos` is `Vector3`, so the proxy returned by `ReadUnaligned<Vector3_16>` can be assigned to it directly.
+
+### Reading multiple parameters at once
+
+[todo]
+
+### Overloading
+
+[todo]
+
+### Implementation by instruction ID
 
 [todo]
 
