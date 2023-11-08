@@ -1,6 +1,6 @@
 # How to Define Custom Kuppa Script Instructions
 
-To define a custom instruction, you need to define its *interface function* inside of the `ExtendedScriptCompiler` class in [extended_ks.h](source/extended_ks.h), and its *implementation function* in [extended_ks.impl](source/extended_ks.impl). The code in these files needs to inserted with NSMBe to make the new instruction work when called from a Kuppa Script, even if the script itself is defined in a DL or somewhere else.
+To define a custom instruction, you need to define its *interface function* inside of the `ExtendedScriptCompiler` class in [extended_ks.h](source/extended_ks.h), and its *implementation function* in [extended_ks.impl](source/extended_ks.impl). The code in these files needs to inserted with NSMBe to make the new instruction work when called from a Kuppa Script, even if the script itself is defined in a dynamic library (DL) or somewhere else.
 
 ## The two types of custom instructions
 
@@ -231,7 +231,7 @@ IMPLEMENT_OVERLOAD(SetPlayerPos, Vector3_16)
 }
 ```
 
-The `IMPLEMENT_OVERLOAD` macro is used instead of `IMPLEMENT`, and the name of the interface function is followed by the parameter types of the intended overload. Since both overloads use the same ID, they must both share the same implementation function. If both of them instead had their own instruction IDs, they would need to have two different implementation functions, one defined with `IMPLEMENT_OVERLOAD(SetPlayerPos, Vector3_16)` and another with `IMPLEMENT_OVERLOAD(SetPlayerPos, short, short, short)`.
+The `IMPLEMENT_OVERLOAD` macro is used instead of `IMPLEMENT`, and the name of the interface function is followed by the parameter types of the intended overload. Since both overloads use the same ID, they must both share the same implementation function. If both of them instead had their own IDs, they would need to have two different implementation functions, one defined with `IMPLEMENT_OVERLOAD(SetPlayerPos, Vector3_16)` and another with `IMPLEMENT_OVERLOAD(SetPlayerPos, short, short, short)`.
 
 ### Implementation by ID
 
@@ -251,7 +251,23 @@ IMPLEMENT_ID(Camera, 64) // Implements camera instruction 64
 }
 ```
 
-I wouldn't recommend this for most instructions since it requires updating the instruction ID in [extended_ks.impl](source/extended_ks.impl) every time it's changed in [extended_ks.h](source/extended_ks.h) and it's easy to forget that.
+I wouldn't recommend this for most instructions since it requires updating the ID in [extended_ks.impl](source/extended_ks.impl) every time it's changed in [extended_ks.h](source/extended_ks.h) and it's easy to forget that.
+
+## Other effects of custom instruction patch
+
+Besides enabling custom instructions, the patch in [extended_ks.cpp](source/extended_ks.cpp) also has the following effects.
+
+### Undefined instructions
+
+Calling camera or player instructions with an invalid ID would make the vanilla game crash, but with this patch they can be executed safely as [nops](https://en.wikipedia.org/wiki/NOP_(code)).
+
+### Null pointer check in the `RunKuppaScript` function
+
+When launching a Kuppa Script from the `init` function of a DL (like in a DKL), running an instruction on frame zero normally crashes the game on real hardware. This is because the `RunKuppaScript` function updates the first frame of the script immediately, and important things like the camera and the player don't exist yet when the DL loads. The patch makes it so that the script is only updated from `RunKuppaScript` if the camera has been initialized, which makes it safe to run instructions on any frame.
+
+### Reversing the effect of the `ActivatePlayer` instruction once the cutscene is over
+
+When the `ActivatePlayer` instruction is run in the vanilla game, the flags that make the player active during cutscenes and star spawning are left set, even though they're normally clear when a player spawns. This isn't a problem in the vanilla game, but this patch clears those flags when the cutscene ends to make things more consistent and predictable.
 
 ## Why only player and camera instructions?
 
