@@ -117,9 +117,80 @@ Because the interface function is a function template, its name given to the `IM
 
 The function parameter list is the same as the one for camera instructions, except for the first parameter which is a reference to a player instead of the camera. Even though the parameters are declared as three `short`s in the interface function, they can be read as a `Vector3_16`, a struct of three `short`s. When the `ReadUnaligned` function template is used to read a `Vector3`, a `Vector3_16` or a `Vector3_16f`, its return type is a lazy-evaluated proxy for `Vector3`. (See `Vector3::Proxy` in [SM64DS_Common.h](source/include/SM64DS_Common.h).) With all other types, the return type would be the same as the template argument, but this specialization for vectors makes it easier to read them while avoiding unnecessary copies. The type of `player.pos` is `Vector3`, so the proxy returned by `ReadUnaligned<Vector3_16>` can be assigned to it directly.
 
-### Reading multiple parameters at once
+### Reading multiple parameters
 
-[todo]
+The `ExpDecayCamAngleZ` from the last section can be implemented using the `ApproachAngle` function from the vanilla game. One might do that like this:
+
+```cpp
+IMPLEMENT(ExpDecayCamAngleZ)
+(Camera& cam, const char* params, short minFrame, short maxFrame)
+{
+	const short targetAngle  = ReadUnaligned<short>(params);
+	const uint16_t invFactor = ReadUnaligned<short>(params + 2);
+	const uint16_t maxDelta  = ReadUnaligned<short>(params + 4);
+	const uint16_t minDelta  = ReadUnaligned<short>(params + 6);
+
+	ApproachAngle(cam.zAngle, targetAngle, invFactor, maxDelta, minDelta);
+}
+```
+
+However, this is not be the best approach. `ReadUnaligned` is called for each parameter separately, which requires offsetting the `params` pointer by the right amount for each of them. This can get confusing with multiple parameters, especially if their sizes differ. Fortunately, `ReadUnaligned` allows reading multiple parameters at once while calculating the offset for each of them automatically. Here's the same instruction implemented this way:
+
+```cpp
+IMPLEMENT(ExpDecayCamAngleZ)
+(Camera& cam, const char* params, short minFrame, short maxFrame)
+{
+	const auto [targetAngle, invFactor, maxDelta, minDelta]
+		= ReadUnaligned<short, uint16_t, uint16_t, uint16_t>(params);
+
+	ApproachAngle(cam.zAngle, targetAngle, invFactor, maxDelta, minDelta);
+}
+```
+
+When called with multiple template arguments, `ReadUnaligned` returns an instance of [`std::tuple`](https://en.cppreference.com/w/cpp/utility/tuple) containing the parameters it read. In most cases I'd recommend extracting them from the tuple to appropriately named local variables using a [structured binding](https://en.cppreference.com/w/cpp/language/structured_binding), like in the example above.
+
+### Using helper functions
+
+Although the file extension might look unfamiliar, the code in [extended_ks.impl](source/extended_ks.impl) is just regular C++ source code. This means that it's possible to use functions, classes, [asm-declarations](https://en.cppreference.com/w/cpp/language/asm), etc. along with the instruction implementations.
+
+Let's say we also want to implement the `ExpDecayPlayerAngleY` instruction, which is very similar to `ExpDecayCamAngleZ`. On its own the implementation would look like this:
+
+```cpp
+IMPLEMENT(ExpDecayPlayerAngleY<>)
+(Player& player, const char* params, short minFrame, short maxFrame)
+{
+	const auto [targetAngle, invFactor, maxDelta, minDelta]
+		= ReadUnaligned<short, uint16_t, uint16_t, uint16_t>(params);
+
+	ApproachAngle(player.ang.y, targetAngle, invFactor, maxDelta, minDelta);
+}
+```
+
+We can see that it's indeed very similar to that of `ExpDecayCamAngleZ`. In fact, most of their implementations can be moved to a single function:
+
+```cpp
+static void CallApproachAngle(short& angle, const char* params)
+{
+	const auto [targetAngle, invFactor, maxDelta, minDelta]
+		= ReadUnaligned<short, uint16_t, uint16_t, uint16_t>(params);
+
+	ApproachAngle(angle, targetAngle, invFactor, maxDelta, minDelta);
+}
+
+IMPLEMENT(ExpDecayCamAngleZ)
+(Camera& cam, const char* params, short minFrame, short maxFrame)
+{
+	CallApproachAngle(cam.zAngle, params);
+}
+
+IMPLEMENT(ExpDecayPlayerAngleY<>)
+(Player& player, const char* params, short minFrame, short maxFrame)
+{
+	CallApproachAngle(player.ang.y, params);
+}
+```
+
+This works just like before, but saves some space and avoids duplicating code.
 
 ### Overloading
 
@@ -142,4 +213,4 @@ Player, camera and object instructions also have another ID, which is used as an
 
 Unfortunately, the object instructions can't be used to manipulate all objects in the game. They only deal with a specific "cutscene object", which can take the appearance of a set number of actual objects based on the instruction ID. They are very specific to the cutscenes in the vanilla game, to the point where it wouldn't really make sense to write custom instructions for them. Even when dealing with objects whose appearance they can take, I'd recommend writing custom instructions to work with real instances of those objects instead of their cutscene object clones.
 
-This leaves us with two catergories for custom instructions: player instructions for controlling playable characters, and "camera" instructions for anything else.
+This leaves us with two categories for custom instructions: player instructions for controlling playable characters, and "camera" instructions for anything else.
