@@ -119,7 +119,7 @@ The function parameter list is the same as the one for camera instructions, exce
 
 ### Reading multiple parameters
 
-The `ExpDecayCamAngleZ` from the last section can be implemented using the `ApproachAngle` function from the vanilla game. One might do that like this:
+The `ExpDecayCamAngleZ` instruction from the last section can be implemented using the `ApproachAngle` function from the vanilla game. One might do that like this:
 
 ```cpp
 IMPLEMENT(ExpDecayCamAngleZ)
@@ -134,7 +134,7 @@ IMPLEMENT(ExpDecayCamAngleZ)
 }
 ```
 
-However, this is not be the best approach. `ReadUnaligned` is called for each parameter separately, which requires offsetting the `params` pointer by the right amount for each of them. This can get confusing with multiple parameters, especially if their sizes differ. Fortunately, `ReadUnaligned` allows reading multiple parameters at once while calculating the offset for each of them automatically. Here's the same instruction implemented this way:
+However, this is not be the best approach. `ReadUnaligned` is called for each parameter separately, which requires offsetting the `params` pointer by the right amount for each of them. This can get confusing with multiple parameters, especially if their sizes differ. Fortunately, `ReadUnaligned` allows reading multiple parameters at once while calculating the offsets for them automatically. Here's the same instruction implemented this way:
 
 ```cpp
 IMPLEMENT(ExpDecayCamAngleZ)
@@ -267,7 +267,7 @@ When launching a Kuppa Script from the `init` function of a DL (like in a DKL), 
 
 ### Reversing the effect of the `ActivatePlayer` instruction once the cutscene is over
 
-When the `ActivatePlayer` instruction is run in the vanilla game, the flags that make the player active during cutscenes and star spawning are left set, even though they're normally clear when a player spawns. This isn't a problem in the vanilla game, but this patch clears those flags when the cutscene ends to make things more consistent and predictable.
+When the `ActivatePlayer` instruction is called in the vanilla game, the flags that make the player active during cutscenes and star spawning remain set after the end of the cutscene, even though they're normally clear when a player spawns. This isn't a problem in the vanilla game, but this patch clears those flags when the cutscene ends to make things more consistent and predictable.
 
 ## Why only player and camera instructions?
 
