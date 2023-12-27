@@ -235,7 +235,6 @@ extern "C"
 	extern char DIGIT_ENC_ARR[10];
 
 	extern uint16_t HEALTH_ARR[4];
-	extern char UNUSED_RAM_REGION[0x023fc000 - 0x023c4000];
 	extern UnknownStruct UNKNOWN_ARR[4];
 	
 	extern int RNG_STATE; //x => x * 0x0019660d + 0x3c6ef35f
@@ -418,6 +417,9 @@ inline Fix12i SmoothStep(Fix12i t)
 {
 	return t * t * (3._f - (t << 1));
 }
+
+template<class T> [[nodiscard, gnu::always_inline]]
+constexpr T Sqr(T val) { return val * val; }
 
 struct Vector3
 {

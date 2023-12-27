@@ -82,7 +82,7 @@ PLAYER_ARR                                                                      
 
 SILVER_STARS                                                                      = 0x0209f40c;
 GAME_PAUSED                                                                       = 0x0209f2c4;
-
+CURRENT_GAMEMODE                                                                  = 0x0209f2d8;
 INPUT_ARR                                                                         = 0x0209f498;
 HEALTH_ARR                                                                        = 0x02092144;
 
@@ -105,9 +105,9 @@ PARTICLE_RNG_STATE                                                              
 _ZN5Sound7PLAYERSE                                                                = 0x020a4d6c;
 _ZN5Sound8SDAT_RAM3PTRE                                                           = 0x020a5bb8;
 
-_ZN7Message9SpriteRef5TIMESE                                                      = 0x020ab9c8;
-_ZN7Message9SpriteRef11NUMBER_PTRSE                                               = 0x020aba70;
-_ZN7Message9SpriteRef4COINE                                                       = 0x020abad8;
+_ZN9SpriteRef5TIMESE                                                              = 0x020ab9c8;
+_ZN9SpriteRef11NUMBER_PTRSE                                                       = 0x020aba70;
+_ZN9SpriteRef4COINE                                                               = 0x020abad8;
 
 _ZN6Player9ANIM_PTRSE                                                             = 0x020ff480;
 
@@ -138,7 +138,7 @@ FEATHER_MODEL_PTR                                                               
 ENEMY_DEATH_FUNCS                                                                 = 0x0210dbc0;
 
 CHANGE_CAP_TOON_COLORS                                                            = 0x02110844;
-AMBIENT_SOUND_EFFECTS_ENABLED                                                     = 0x02110aec;
+AMBIENT_SOUND_EFFECTS_DISABLED                                                    = 0x02110aec;
 
 CLPS_BLOCK_PTR                                                                    = 0x0214eb00;
 
@@ -245,6 +245,7 @@ _ZN5Sound15LoadAndSetMusicEj                                                    
 _ZN5Sound12PlayMsgSoundEjjj5Fix12IiEb                                             = 0x02012be0;
 _ZN5Sound17ChangeMusicVolumeEj5Fix12IiE                                           = 0x02012d2c;
 _ZN5Sound16UnkPlaySoundFuncEj                                                     = 0x02012790;
+_ZN5Sound11ChangeMusicEj                                                          = 0x0201320c;
 
 SublevelToLevel                                                                   = 0x02013558;
 NumStars                                                                          = 0x0201367c;
@@ -363,7 +364,7 @@ _ZN7Message11PrepareTalkEv                                                      
 _ZN7Message7AddCharEc                                                             = 0x0201b5a8;
 _ZN7Message7DisplayEj                                                             = 0x0201e574;
 
-_ZN7Message10ShowNumberEbRNS_9SpriteRefEiiijj                                     = 0x020214a4;
+_Z10ShowNumberbR9SpriteRefiiijj                                                   = 0x020214a4;
 
 _ZNK8Particle10SysTracker8Contents8FindDataEj                                     = 0x02021b58;
 _ZN8Particle14SplashCallback8OnUpdateERNS_6SystemEb                               = 0x020224fc;
@@ -666,6 +667,7 @@ Player_PlaySoundEffect                                                          
 AreCannonsActivatedForCurrentLevel                                                = 0x0202A694;
 SetCannonsToActivatedForCurrentLevel                                              = 0x0202A67C;
 LoadLevel                                                                         = 0x0202ACC0;
+ChangeArea                                                                        = 0x0202aa88;
 ApproachAngle                                                                     = 0x0203b008;
 Player_WasLastAction                                                              = 0x020BEECC;
 Player_DoesStateEqual                                                             = 0x020E308C;
@@ -1062,6 +1064,7 @@ _ZdaPv                                                                          
 _ZdlPvj                                                                           = 0x0203CBF0; /* thunk at 0x0203cbcc */
 
 KS_CAMERA_FUNCTIONS                                                               = 0x0209b138;
+KS_PLAYER_FUNCTIONS                                                               = 0x02110794;
 KS_FRAME_COUNTER                                                                  = 0x0209b274;
 RUNNING_KUPPA_SCRIPT                                                              = 0x0209fc48;
 RunKuppaScript                                                                    = 0x0200ef04;
@@ -1136,7 +1139,7 @@ _ZN6Player7ST_DIVEE                = 0x021105bc;
 _ZN6Player8ST_THROWE               = 0x021105d4;
 _ZN6Player14ST_BOWSER_SPINE        = 0x021105ec;
 
-
+_ZN6Player8ST_SWEEPE               = 0x0211061c;
 _ZN6Player13ST_SLIDE_KICKE         = 0x02110634;
 _ZN6Player15ST_FIRST_PERSONE       = 0x0211064c;
 
@@ -1151,9 +1154,6 @@ _ZN6Player17ST_HEADSTAND_JUMPE     = 0x02110724;
 
 
 KS_PLAYER_INSTRUCTIONS                                                            = 0x02110794;
-
-
-UNUSED_RAM_REGION                                                                 = 0x023C4000;
 
 _ZN9ActorBase7ProcessEMS_FivEMS_FbvEMS_FvjE = 0x02043c88;
 

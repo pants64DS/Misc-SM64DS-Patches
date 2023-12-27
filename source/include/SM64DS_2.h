@@ -389,6 +389,7 @@ struct Area
 	unsigned unk8;
 };
 
+extern "C" void ChangeArea(int areaID);
 
 //vtable at 0x0210C2C8, ctor at 0x020FE154
 struct HUD : public ActorDerived		//internal name: dMeter, ActorID = 0x14e
@@ -485,10 +486,7 @@ struct Minimap : public ActorDerived //ActorID = 0x14f
 		AR_ROTATE_WITH_MINIMAP = 2
 	};
 	
-	unsigned unk050;
-	unsigned unk054;
-	unsigned unk058;
-	unsigned unk05c;
+	Matrix2x2 transform;
 	unsigned unk060;
 	unsigned unk064;
 	unsigned unk068;
@@ -694,6 +692,7 @@ struct Player : public Actor
 	       ST_DIVE,
 	       ST_THROW,
 	       ST_BOWSER_SPIN,
+	       ST_SWEEP,
 	       ST_SLIDE_KICK,
 	       ST_FIRST_PERSON,
 	       ST_SWIM,
@@ -781,7 +780,7 @@ struct Player : public Actor
 	char* unk57c;
 	unsigned unk580;
 	unsigned unk584;
-	char* unk588;
+	Actor** eggPtrArr;
 	unsigned unk58c;
 	unsigned unk590;
 	unsigned unk594;
@@ -850,7 +849,7 @@ struct Player : public Actor
 	short inputAngle;
 	unsigned unk6d4;
 	uint8_t playerID; //always 0 in single player mode
-	uint8_t unk6d9;
+	uint8_t realChar; // probably
 	uint8_t unk6da;
 	uint8_t renderedChar;
 	uint8_t prevHatChar; // 0x6DC
@@ -895,7 +894,7 @@ struct Player : public Actor
 	bool isTangible;
 	uint8_t unk714;
 	uint8_t unk715;
-	uint8_t isTangibleToMesh;
+	uint8_t isIntangibleToMesh;
 	uint8_t unk717;
 	unsigned unk718;
 	unsigned unk71c;
@@ -959,6 +958,17 @@ struct Player : public Actor
 	void Bounce(Fix12i bounceInitVel);
 	bool ChangeState(Player::State& state);
 	int CallKuppaScriptInstruction(char* instruction, short minFrame, short maxFrame);
+
+	// TKWSC specific
+	bool NoAnimChange_Init();
+	bool NoAnimChange_Main();
+	bool NoAnimChange_Cleanup();
+
+	void ChangeArea(int newAreaID)
+	{
+		areaID = newAreaID;
+		::ChangeArea(newAreaID);
+	}
 
 	bool IsWarping() const
 	{
@@ -1206,7 +1216,8 @@ extern "C"
 	extern EnemyDeathFunc ENEMY_DEATH_FUNCS[8];
 
 	extern uint8_t GAME_PAUSED; // 0 = not paused, 1 = paused, 2 = unpausing
-	extern unsigned AMBIENT_SOUND_EFFECTS_ENABLED;
+	extern uint8_t CURRENT_GAMEMODE;
+	extern unsigned AMBIENT_SOUND_EFFECTS_DISABLED;
 
 	short GetAngleToCamera(unsigned playerID = 0);
 	

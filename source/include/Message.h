@@ -19,16 +19,6 @@
 
 struct Message
 {
-	struct SpriteRef
-	{
-		unsigned unk0;
-		unsigned unk4;
-		
-		static SpriteRef COIN;
-		static SpriteRef* NUMBER_PTRS[20]; //first 10 are gold versions of 0-9, last 10 are red versions of 0-9
-		static SpriteRef TIMES;
-	};
-	
 	/*static wchar_t chars = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
 							'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
 							'W', 'X', 'Y', 'Z', '「', '」', '?', '!', '~', ',', '“', '”', '•', 'a', 'b', 'c',
@@ -50,10 +40,46 @@ struct Message
 	
 	static void AddChar(char charInFontEncoding);
 	static void Display(unsigned msgID);
-	//Add 9 to the horizontal spacing to show multiple digits.
-	// (usual values)                                                               -1                           1              0
-	static void ShowNumber(bool bottomScreen, SpriteRef& number, int x, int y, int dontInvertGradient, unsigned arg5, unsigned arg6);
 };
+
+struct SpriteRef
+{
+	unsigned unk0;
+	unsigned unk4;
+
+	static SpriteRef COIN;
+	static SpriteRef* NUMBER_PTRS[20]; // first 10 are gold versions of 0-9, last 10 are red versions of 0-9
+	static SpriteRef TIMES;
+};
+
+// Add 9 to the horizontal spacing to show multiple digits
+// Usual values given as default arguments
+void ShowNumber(bool onBottomScreen, SpriteRef& number, int x, int y, int gradientSetting = -1, unsigned arg5 = 1, unsigned arg6 = 0);
+
+inline void ShowDecimalInt(unsigned val, int x, int y, bool onBottomScreen = false, bool isRed = false)
+{
+	uint8_t digits[10]; // 32-bit integers can have up to 10 decimal digits
+	int numDigits = 0;
+
+	if (val == 0)
+	{
+		digits[0] = 0;
+		numDigits = 1;
+	}
+	else while (val)
+	{
+		digits[numDigits++] = val % 10;
+		val /= 10;
+	}
+
+	const unsigned offset = isRed * 10;
+
+	for (int i = numDigits - 1; i >= 0; --i)
+	{
+		ShowNumber(onBottomScreen, *SpriteRef::NUMBER_PTRS[offset + digits[i]], x, y);
+		x += 9;
+	}
+}
 
 struct MsgFile
 {

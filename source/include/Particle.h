@@ -474,8 +474,10 @@ namespace Particle
 		uint16_t numSysDefs;
 		uint8_t numTextures;
 		uint8_t numBuiltInTexs;
-		uint16_t unk2c;
-		uint16_t unk2e;
+		uint16_t unk28;
+		uint16_t unk2a;
+		unsigned unk2c;
+		unsigned polygonAttr;
 		
 		System* AddSystem(int particleID, Vector3& posAsr3);
 		static bool LoadTex(unsigned fileID, unsigned newTexID);
