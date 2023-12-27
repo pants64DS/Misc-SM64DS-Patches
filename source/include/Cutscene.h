@@ -27,7 +27,7 @@ extern "C"
 	extern char* RUNNING_KUPPA_SCRIPT; // nullptr if no script is running
 }
 
-template<std::size_t size> requires(size > 0)
+template<std::size_t size, class... Initializers> requires(size > 0)
 struct KuppaScript
 {
 	std::array<char, size> data;
@@ -39,9 +39,16 @@ struct KuppaScript
 	constexpr       char* Raw()       { return data.data(); }
 	constexpr const char* Raw() const { return data.data(); }
 
-	bool Run() & { return RunKuppaScript(data.data()); }
+	bool Run() &
+	{
+		(Initializers{}(data.data()), ...);
+
+		return RunKuppaScript(data.data());
+	}
 
 	static void Stop() { EndKuppaScript(); }
+
+	bool IsRunning() const { return RUNNING_KUPPA_SCRIPT == data.data(); }
 };
 
 namespace KuppaScriptImpl {
@@ -83,13 +90,17 @@ consteval auto ToByteArray(const auto&... args)
 		return (std::bit_cast<std::array<char, sizeof(args)>>(args) + ...);
 }
 
-template<template<std::size_t scriptSize> class DerivedCompiler, std::size_t scriptSize>
+template<
+	template<std::size_t scriptSize, class... Initializers> class DerivedCompiler,
+	std::size_t scriptSize,
+	class... Initializers
+>
 class BaseScriptCompiler
 {
 	const std::array<char, scriptSize> precedingScript;
 
 public:
-	template<std::size_t paramListSize>
+	template<std::size_t paramListSize, class... NewInitializers>
 	struct PendingInstruction
 	{
 		uint8_t id;
@@ -101,7 +112,7 @@ public:
 
 		consteval auto operator()(short minFrame, short maxFrame) const
 		{
-			return DerivedCompiler<scriptSize + size>
+			return DerivedCompiler<scriptSize + size, Initializers..., NewInitializers...>
 			{
 				precedingScript
 				+ std::to_array<char>({size, id})
@@ -124,25 +135,25 @@ public:
 
 	consteval auto End()
 	{
-		return KuppaScript<scriptSize + 1>{precedingScript + std::to_array<char>({0})};
+		return KuppaScript<scriptSize + 1, Initializers...>{precedingScript + std::to_array<char>({0})};
 	}
 
-	template<uint8_t id, class... Args>
-	consteval PendingInstruction<(sizeof(Args) + ... + 0)> Instruction(const Args&... args)
+	template<uint8_t id, class... NewInitializers>
+	consteval auto Instruction(const auto&... args) -> PendingInstruction<(sizeof(args) + ... + 0), NewInitializers...>
 	{
 		return {id, precedingScript, ToByteArray(args...)};
 	}
 
-	template<CharID Char, uint8_t subID, class... Args>
-	consteval auto PlayerInstruction(const Args&... args)
+	template<CharID Char, uint8_t subID, class... NewInitializers>
+	consteval auto PlayerInstruction(const auto&... args)
 	{
-		return Instruction<Char::instructionID>(subID, args...);
+		return Instruction<Char::instructionID, NewInitializers...>(subID, args...);
 	}
 
-	template<uint8_t subID, class... Args>
-	consteval auto CamInstruction(const Args&... args)
+	template<uint8_t subID, class... NewInitializers>
+	consteval auto CamInstruction(const auto&... args)
 	{
-		return Instruction<4>(subID, args...);
+		return Instruction<4, NewInitializers...>(subID, args...);
 	}
 
 	// Set camera target position (coordinates in fxu)

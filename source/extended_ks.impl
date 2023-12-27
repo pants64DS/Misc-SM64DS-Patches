@@ -1,5 +1,22 @@
 #include "unaligned.h"
 
+[[gnu::noinline]]
+static void Call(ActorBase& actor, const char* params)
+{
+	ReadUnaligned<void(*)(ActorBase&)>(params)(actor);
+}
+
+IMPLEMENT_ID(Camera, 39)
+(Camera& cam, const char* params, short minFrame, short maxFrame)
+{
+	Call(cam, params);
+}
+
+IMPLEMENT_ID(Player, 14)
+(Player& player, const char* params, short minFrame, short maxFrame)
+{
+	Call(player, params);
+}
 
 IMPLEMENT_OVERLOAD(SetPlayerPos, Vector3_16)
 (Player& player, const char* params, short minFrame, short maxFrame)
@@ -158,7 +175,7 @@ IMPLEMENT_OVERLOAD(LerpCamTarget, Vector3_16, uint8_t)
 IMPLEMENT(DisableAmbientSoundEffects)
 (Camera& cam, const char* params, short minFrame, short maxFrame)
 {
-	AMBIENT_SOUND_EFFECTS_ENABLED = 1;
+	AMBIENT_SOUND_EFFECTS_DISABLED = 1;
 }
 
 

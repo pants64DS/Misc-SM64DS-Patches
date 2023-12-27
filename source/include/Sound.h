@@ -250,6 +250,7 @@ namespace Sound
 	void EndMusic(unsigned arg0, unsigned musicID);
 	void UnkPlaySoundFunc(unsigned soundID);
 	
+	void ChangeMusic(unsigned musicID);
 	void ChangeMusicVolume(unsigned newVolume, Fix12i changeSpeed);
 }
 
