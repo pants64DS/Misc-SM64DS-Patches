@@ -959,11 +959,6 @@ struct Player : public Actor
 	bool ChangeState(Player::State& state);
 	int CallKuppaScriptInstruction(char* instruction, short minFrame, short maxFrame);
 
-	// TKWSC specific
-	bool NoAnimChange_Init();
-	bool NoAnimChange_Main();
-	bool NoAnimChange_Cleanup();
-
 	void ChangeArea(int newAreaID)
 	{
 		areaID = newAreaID;
