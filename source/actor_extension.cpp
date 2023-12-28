@@ -1,76 +1,58 @@
-#include "actor_extension.h"
-#include <array>
-#include <type_traits>
+#include "actor_tree.h"
 
-asm("offsetTable = 0x02000000");
+static_assert(alignof(ActorTreeNode) == alignof(Actor));
+static constinit std::byte* newExtensionAddr;
 
-static_assert(alignof(ActorExtension) <= alignof(Actor));
-static_assert(std::is_trivially_destructible_v<ActorExtension>);
+std::byte* AllocateOnGameHeap(size_t size);
 
-constexpr size_t AlignOffset(size_t offset)
-{
-	constexpr size_t alignment = alignof(ActorExtension);
-	return (offset + alignment - 1) & ~(alignment - 1);
-}
-
-class ExtensionOffsetTable
-{
-	static constexpr uint16_t length = 0x310;
-	std::array<uint16_t, length> arr;
-
-public:
-
-	inline size_t Insert(uint16_t actorID, size_t offset)
-	{
-		offset = AlignOffset(offset);
-		
-		if (actorID < length && offset < 0x10000) [[likely]]
-			return arr[actorID] = offset;
-
-		else [[unlikely]]
-			return 0;
-	}
-
-	inline size_t Get(uint16_t actorID)
-	{
-		if (actorID < length) [[likely]]
-			return arr[actorID];
-
-		else [[unlikely]]
-			return 0;
-	}
-}
-extern offsetTable;
-
-uint16_t spawningActor = 0;
-
-char* AllocateOnGameHeap(size_t size);
+asm(R"(
+_Z18AllocateOnGameHeapj:
+	push  {r4, r5, r14}
+	b     _ZN9ActorBasenwEj + 4
+)");
 
 // at the beginning of ActorBase::operator new
 void* nsub_02043444(size_t size)
 {
-	if (spawningActor > 0)
-	{
-		const size_t offset = offsetTable.Insert(spawningActor, size);
-
-		if (offset > 0)
-		{
-			char* const allocAddr = AllocateOnGameHeap(offset + sizeof(ActorExtension));
-
-			new (allocAddr + offset) ActorExtension();
-
-			return allocAddr;
-		}
-	}
-
-	return AllocateOnGameHeap(size);
+	std::byte* allocAddr = AllocateOnGameHeap(size + sizeof(ActorTreeNode));
+	newExtensionAddr = allocAddr + size;
+	
+	return allocAddr;
 }
 
-ActorExtension* GetActorExtension(const Actor& actor)
-{
-	size_t offset = offsetTable.Get(actor.actorID);
-	if (offset == 0) return nullptr;
+asm(R"(
+nsub_020114e0 = _Z18ConstructExtensionR5Actor
+nsub_0201162c = _Z18ConstructExtensionR5Actor
+)");
 
-	const char* ptr = reinterpret_cast<const char*>(&actor) + offset;
-	return const_cast<ActorExtension*>(reinterpret_cast<const ActorExtension*>(ptr));
+Actor& ConstructExtension(Actor& actor)
+{
+	new (newExtensionAddr) ActorTreeNode(actor);
+
+	return actor;
+}
+
+asm(R"(
+repl_020112cc:
+repl_02011318:
+repl_02011378:
+	mov  r4, r0
+	b    _Z17DestructExtensionRK5Actor
+)");
+
+static ActorTreeNode& GetTreeNode(const Actor& actor)
+{
+	if (!Memory::gameHeapPtr) Crash();
+	const std::size_t offset = Memory::gameHeapPtr->Sizeof(&actor) - sizeof(ActorTreeNode);
+
+	return const_cast<ActorTreeNode&>(
+		*reinterpret_cast<const ActorTreeNode*>(
+			reinterpret_cast<const std::byte*>(&actor) + offset
+		)
+	);
+}
+
+void DestructExtension(const Actor& actor)
+{
+	GetTreeNode(actor).~ActorTreeNode();
 }
