@@ -763,7 +763,7 @@ struct Player : public Actor
 	State* currState;
 	State* prevState;
 	State* nextState;
-	unsigned unk37c;
+	CylinderClsn* climbedCylClsn; // null if the player isn't climbing on anything
 	WithMeshClsn wmClsn;
 	Vector3 unk53c;
 	Vector3 unk540; //mirrors the player's position?
