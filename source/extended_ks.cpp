@@ -1,5 +1,5 @@
 #include "extended_ks.h"
-#include "include/SM64DS_2.h"
+#include "SM64DS_2.h"
 
 namespace KuppaScriptImpl
 {

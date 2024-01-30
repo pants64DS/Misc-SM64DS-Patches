@@ -37,7 +37,7 @@ export LD      := $(PREFIX)ld
 TARGET   := newcode
 BUILD    := build
 SOURCES  := source glibc
-INCLUDES := ../dynamic_lib/source ../source ..
+INCLUDES := ../include
 
 ARCHFLAGS := -march=armv5te -mtune=arm946e-s
 

@@ -1,7 +1,7 @@
 #ifndef UNALIGNED_INCLUDED
 #define UNALIGNED_INCLUDED
 
-#include "include/SM64DS_2.h"
+#include "SM64DS_2.h"
 #include <cstring>
 #include <tuple>
 
