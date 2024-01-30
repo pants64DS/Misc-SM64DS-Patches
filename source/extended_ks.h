@@ -2,8 +2,8 @@
 #define EXTENDED_KS_INCLUDED
 
 #include <cstring>
-#include "include/Cutscene.h"
-#include "include/SM64DS_2.h"
+#include "Cutscene.h"
+#include "SM64DS_2.h"
 
 using Any = KuppaScriptImpl::CharID_Type<0xff>;
 

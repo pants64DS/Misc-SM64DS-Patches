@@ -2,7 +2,7 @@
 #define ACTOR_TREE_INCLUDED
 
 #include <algorithm>
-#include "include/SM64DS_2.h"
+#include "SM64DS_2.h"
 
 class ActorTreeNode
 {

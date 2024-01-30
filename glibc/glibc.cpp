@@ -1,4 +1,4 @@
-#include "include/SM64DS_Common.h"
+#include "SM64DS_Common.h"
 
 static void CopyBackwards(char* dest, const char* src, size_t size)
 {

@@ -1,7 +1,7 @@
 #ifndef INFINITE_FLOOR_INCLUDED
 #define INFINITE_FLOOR_INCLUDED
 
-#include "include/SM64DS_2.h"
+#include "SM64DS_2.h"
 
 struct InfiniteFloor : public Actor, public MeshColliderBase
 {

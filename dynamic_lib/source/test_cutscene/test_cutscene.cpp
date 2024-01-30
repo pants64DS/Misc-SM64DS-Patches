@@ -1,5 +1,5 @@
 #include "extended_ks.h"
-#include "include/Input.h"
+#include "Input.h"
 
 constinit auto script = NewScript().
 

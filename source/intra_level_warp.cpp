@@ -1,4 +1,4 @@
-#include "include/SM64DS_2.h"
+#include "SM64DS_2.h"
 // #include "MOM/source/MOM_IDs.h"
 
 asm(R"(

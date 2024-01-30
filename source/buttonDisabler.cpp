@@ -1,4 +1,4 @@
-#include "include/SM64DS_2.h"
+#include "SM64DS_2.h"
 
 uint16_t realButtonsPressed, realButtonsHeld;
 
