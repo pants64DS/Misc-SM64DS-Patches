@@ -3,8 +3,15 @@
 #---------------------------------------------------------------------------------
 
 ifeq ($(strip $(DEVKITARM)),)
-	$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
+	$(error "DEVKITARM variable not defined")
 endif
+
+ifeq ($(strip $(SM64DSe)),)
+	$(error "SM64DSe variable not defined")
+endif
+
+TARGET   := newcode
+# BUILD    := build
 
 #---------------------------------------------------------------------------------
 # path to tools
@@ -26,6 +33,26 @@ export OBJCOPY := $(PREFIX)objcopy
 export OBJDUMP := $(PREFIX)objdump
 export LD      := $(PREFIX)ld
 
+ifndef SOURCE
+
+SOURCES := $(notdir $(wildcard source/*))
+ROM := "$(wildcard ../*.nds)"
+
+all: $(SOURCES)
+
+$(SOURCES):
+	@echo building DL $@
+	@mkdir -p $(CURDIR)/build/$@
+	@echo -e "all:\n\t@make --no-print-directory -C $(CURDIR) -f $(CURDIR)/Makefile" > $(CURDIR)/build/$@/Makefile
+	"$(SM64DSe)" compile DL $(ROM) $(CURDIR)/build/$@ $(file < source/$@/target.txt) --env SOURCE=$@ BUILD=build/$@
+
+.PHONY: clean
+
+clean:
+	@echo clean ...
+	@rm -fr build
+
+else
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -34,10 +61,8 @@ export LD      := $(PREFIX)ld
 # INCLUDES is a list of directories containing extra header files
 
 #---------------------------------------------------------------------------------
-TARGET   := newcode
-BUILD    := build
-SOURCES  := ../glibc source/test_cutscene
-INCLUDES := ../source ..
+SOURCES  := ../glibc source/$(SOURCE)
+INCLUDES := ../include ../source
 
 ARCHFLAGS := -march=armv5te -mtune=arm946e-s
 
@@ -48,7 +73,7 @@ CFLAGS := -Wall -Wextra -Werror -Wno-unused-parameter -Wno-narrowing \
 
 CXXFLAGS := $(CFLAGS) -std=c++23 -fno-exceptions -fno-rtti -fno-threadsafe-statics -faligned-new=4
 
-LDFLAGS = --gc-sections -T $(CURDIR)/../../symbols.x -T $(CURDIR)/../../linker.x -Map $(TARGET).map
+LDFLAGS = --gc-sections -T $(CURDIR)/../../../symbols.x -T $(CURDIR)/../../../linker.x -Map $(TARGET).map
 
 ifdef CODEADDR
 	LDFLAGS += -Ttext $(CODEADDR)
@@ -57,9 +82,9 @@ endif
 LIBS := 
 LIBDIRS := $(LIBNDS)  $(DEVKITARM) $(DEVKITARM)/arm-none-eabi
 
-ifneq ($(BUILD),$(notdir $(CURDIR)))
+ifeq (dynamic_lib,$(notdir $(CURDIR)))
 
-export OUTPUT := $(CURDIR)/$(TARGET)
+export OUTPUT := $(CURDIR)/$(BUILD)/$(TARGET)
 export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
 export DEPSDIR := $(CURDIR)/$(BUILD)
 
@@ -73,17 +98,11 @@ export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib) -L$(DEVKITARM)/lib/gcc
 export INCLUDE := $(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir)) \
                   $(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
 
-.PHONY: $(BUILD) clean
+.PHONY: $(BUILD)
 
-#---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-
-clean:
-	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).bin $(TARGET).sym
-#---------------------------------------------------------------------------------
 
 else
 
@@ -129,3 +148,4 @@ $(OUTPUT).elf: $(OFILES)
 endif
 #---------------------------------------------------------------------------------------
 
+endif
