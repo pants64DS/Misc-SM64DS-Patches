@@ -1,6 +1,8 @@
-#---------------------------------------------------------------------------------
+# Disable default suffixes
 .SUFFIXES:
-#---------------------------------------------------------------------------------
+
+TARGET_LO := newcode_lo
+TARGET_HI := newcode_hi
 
 ifndef SOURCE
 
@@ -16,8 +18,9 @@ SOURCES := $(notdir $(wildcard source/*))
 ROM := "$(wildcard ../*.nds)"
 
 all: $(SOURCES)
-	"$(SM64DSe)" insertDL $(ROM) build targets.txt
+	"$(SM64DSe)" insertDLs $(ROM) build targets.txt
 
+# Call make recursively for each DL
 $(SOURCES):
 	@echo building DL \'$@\' ...
 	@mkdir -p $(CURDIR)/build/$@
@@ -30,17 +33,12 @@ clean:
 	@rm -fr build
 
 else
+# Now SOURCE is the source folder of a specific DL
 
-#---------------------------------------------------------------------------------
-# path to tools
-#---------------------------------------------------------------------------------
 PORTLIBS := $(DEVKITPRO)/portlibs/arm
 PATH     := $(DEVKITARM)/bin:$(PORTLIBS)/bin:$(PATH)
 LIBNDS   := $(DEVKITPRO)/libnds
 
-#---------------------------------------------------------------------------------
-# the prefix on the compiler executables
-#---------------------------------------------------------------------------------
 PREFIX := arm-none-eabi-
 
 CC      := $(PREFIX)gcc
@@ -51,14 +49,6 @@ OBJCOPY := $(PREFIX)objcopy
 OBJDUMP := $(PREFIX)objdump
 LD      := $(PREFIX)ld
 
-#---------------------------------------------------------------------------------
-# TARGET is the name of the output
-# BUILD is the directory where object files & intermediate files will be placed
-# SOURCES is a list of directories containing source code
-# INCLUDES is a list of directories containing extra header files
-
-#---------------------------------------------------------------------------------
-TARGET   := newcode
 SOURCES  := ../glibc source/$(SOURCE)
 INCLUDES := ../include ../source
 
@@ -90,58 +80,42 @@ SFILES   := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 OFILENAMES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 OFILES = $(foreach name,$(OFILENAMES),$(BUILD)/$(name))
 
-#---------------------------------------------------------------------------------
-# main targets
-#---------------------------------------------------------------------------------
+OUTPUT_LO := $(CURDIR)/$(BUILD)/$(TARGET_LO)
+OUTPUT_HI := $(CURDIR)/$(BUILD)/$(TARGET_HI)
 
-OUTPUT0 := $(CURDIR)/$(BUILD)/$(TARGET)
-OUTPUT1 := $(CURDIR)/$(BUILD)/$(TARGET)1
-
-BINFILES = $(foreach output,$(OUTPUT0) $(OUTPUT1),$(output).bin)
-SYMFILES = $(foreach output,$(OUTPUT0) $(OUTPUT1),$(output).sym)
-
-ELFFILES0 = $(foreach output,$(OUTPUT0),$(output).elf)
-ELFFILES1 = $(foreach output,$(OUTPUT1),$(output).elf)
+BINFILES = $(OUTPUT_LO).bin $(OUTPUT_HI).bin
+SYMFILES = $(OUTPUT_LO).sym $(OUTPUT_HI).sym
 
 all: $(BINFILES) $(SYMFILES)
 
-$(BINFILES) : $(ELFFILES0) $(ELFFILES1)
+$(CURDIR)/$(BUILD)/%.bin : $(CURDIR)/$(BUILD)/%.elf
 	$(OBJCOPY) -O binary $< $@
 	@echo built ... $(notdir $@)
 
-$(SYMFILES) : $(ELFFILES0) $(ELFFILES1)
+$(CURDIR)/$(BUILD)/%.sym : $(CURDIR)/$(BUILD)/%.elf
 	$(OBJDUMP) -t $< > $@
 	@echo written the symbol table ... $(notdir $@)
 
-#---------------------------------------------------------------------------------
-
-$(ELFFILES0): $(OFILES)
+$(OUTPUT_LO).elf: $(OFILES)
 	@echo linking $(notdir $@)
 	$(LD) $(LDFLAGS) -Ttext 0x02400000 $(OFILES) $(LIBPATHS) $(LIBS) -o $@
 
-$(ELFFILES1): $(OFILES)
+$(OUTPUT_HI).elf: $(OFILES)
 	@echo linking $(notdir $@)
 	$(LD) $(LDFLAGS) -Ttext 0x02400004 $(OFILES) $(LIBPATHS) $(LIBS) -o $@
 
-#---------------------------------------------------------------------------------
 $(BUILD)/%.o: %.cpp
 	@echo $(notdir $<)
 	$(CXX) -MMD -MP -MF $(DEPSDIR)/$*.d $(CXXFLAGS) -c $< -o $@ $(ERROR_FILTER)
 
-#---------------------------------------------------------------------------------
 $(BUILD)/%.o: %.c
 	@echo $(notdir $<)
 	$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $< -o $@ $(ERROR_FILTER)
 
-#---------------------------------------------------------------------------------
 $(BUILD)/%.o: %.s
 	@echo $(notdir $<)
 	$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d -x assembler-with-cpp $(ARCHFLAGS) -c $< -o $@ $(ERROR_FILTER)
 
-#---------------------------------------------------------------------------------
-
 -include $(DEPSDIR)/*.d
 
-#---------------------------------------------------------------------------------------
 endif
-#---------------------------------------------------------------------------------------
