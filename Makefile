@@ -36,7 +36,7 @@ export LD      := $(PREFIX)ld
 #---------------------------------------------------------------------------------
 TARGET   := newcode
 BUILD    := build
-SOURCES  := source glibc
+SOURCES  := source libc
 INCLUDES := ../include
 
 ARCHFLAGS := -march=armv5te -mtune=arm946e-s
