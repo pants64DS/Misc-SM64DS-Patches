@@ -49,7 +49,7 @@ OBJCOPY := $(PREFIX)objcopy
 OBJDUMP := $(PREFIX)objdump
 LD      := $(PREFIX)ld
 
-SOURCES  := ../glibc source/$(SOURCE)
+SOURCES  := ../libc source/$(SOURCE)
 INCLUDES := ../include ../source
 
 LIBS := 
