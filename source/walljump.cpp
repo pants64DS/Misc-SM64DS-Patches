@@ -1,4 +1,4 @@
-#include "SM64DS_2.h"
+#include "SM64DS_PI.h"
 
 extern "C" bool ShouldNotWallSlide(Player& player)
 {

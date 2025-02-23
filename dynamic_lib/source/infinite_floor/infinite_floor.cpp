@@ -14,8 +14,8 @@ SpawnInfo InfiniteFloor::spawnData =
 
 const CLPS& InfiniteFloor::GetCLPS() const
 {
-	if (LevelFile::CLPS_BLOCK_PTR)
-		return (*LevelFile::CLPS_BLOCK_PTR)[param1];
+	if (LEVEL_OVERLAY.clps)
+		return (*LEVEL_OVERLAY.clps)[param1];
 
 	static constexpr CLPS defaultCLPS = {};
 	return defaultCLPS;
@@ -43,7 +43,7 @@ void InfiniteFloor::GetTriangleOrigin(short triangleID, Vector3& res)
 	res = this->pos;
 }
 
-unsigned InfiniteFloor::DetectClsn(RaycastGround& ray)
+bool InfiniteFloor::DetectClsn(RaycastGround& ray)
 {
 	if (ray.ShouldPassThrough(GetCLPS(), false)) return 0;
 
@@ -58,7 +58,7 @@ unsigned InfiniteFloor::DetectClsn(RaycastGround& ray)
 	return 1;
 }
 
-unsigned InfiniteFloor::DetectClsn(RaycastLine& ray)
+bool InfiniteFloor::DetectClsn(RaycastLine& ray)
 {
 	if (ray.ShouldPassThrough(GetCLPS(), false)) return 0;
 
@@ -123,7 +123,7 @@ unsigned InfiniteFloor::DetectClsn(SphereClsn& sphere)
 
 void init()
 {
-	ACTOR_SPAWN_TABLE[InfiniteFloor::staticActorID] = reinterpret_cast<unsigned>(&InfiniteFloor::spawnData);
+	ACTOR_SPAWN_TABLE[InfiniteFloor::staticActorID] = &InfiniteFloor::spawnData;
 	OBJ_TO_ACTOR_ID_TABLE[InfiniteFloor::staticActorID] = InfiniteFloor::staticActorID;
 }
 

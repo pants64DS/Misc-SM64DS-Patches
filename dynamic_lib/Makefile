@@ -18,7 +18,7 @@ SOURCES := $(notdir $(wildcard source/*))
 ROM := "$(wildcard ../*.nds)"
 
 all: $(SOURCES)
-	"$(SM64DSe)" insertDLs $(ROM) build targets.txt
+	"$(SM64DSe)" insertDLs --rom=$(ROM) build targets.txt
 
 # Call make recursively for each DL
 $(SOURCES):
@@ -50,7 +50,7 @@ OBJDUMP := $(PREFIX)objdump
 LD      := $(PREFIX)ld
 
 SOURCES  := ../libc source/$(SOURCE)
-INCLUDES := ../include ../source
+INCLUDES := ../include ../source ../SM64DS-PI/include
 
 LIBS := 
 LIBDIRS := $(LIBNDS)  $(DEVKITARM) $(DEVKITARM)/arm-none-eabi
@@ -68,7 +68,8 @@ CFLAGS := -Wall -Wextra -Werror -Wno-unused-parameter -Wno-narrowing \
 
 CXXFLAGS := $(CFLAGS) -std=c++23 -fno-exceptions -fno-rtti -fno-threadsafe-statics -faligned-new=4
 
-LDFLAGS = --gc-sections -T $(CURDIR)/../symbols.x -T $(CURDIR)/../linker.x
+SYMBOLS = $(CURDIR)/../SM64DS-PI/symbols9.x
+LDFLAGS = --gc-sections -T $(SYMBOLS) -T $(CURDIR)/../linker.x
 
 export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
 DEPSDIR := $(CURDIR)/$(BUILD)

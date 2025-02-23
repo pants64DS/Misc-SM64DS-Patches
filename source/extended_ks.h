@@ -3,7 +3,7 @@
 
 #include <cstring>
 #include "Cutscene.h"
-#include "SM64DS_2.h"
+#include "SM64DS_PI.h"
 
 using Any = KuppaScriptImpl::CharID_Type<0xff>;
 

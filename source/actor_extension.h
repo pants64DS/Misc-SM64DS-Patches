@@ -1,7 +1,7 @@
 #ifndef ACTOR_EXTENDER_INCLUDED
 #define ACTOR_EXTENDER_INCLUDED
 
-#include "SM64DS_2.h"
+#include "SM64DS_PI.h"
 
 // Replace this struct and its constructor with your own stuff
 struct ActorExtension

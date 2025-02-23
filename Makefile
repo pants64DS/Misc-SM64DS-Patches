@@ -37,7 +37,7 @@ export LD      := $(PREFIX)ld
 TARGET   := newcode
 BUILD    := build
 SOURCES  := source libc
-INCLUDES := ../include
+INCLUDES := ../include ../SM64DS-PI/include
 
 ARCHFLAGS := -march=armv5te -mtune=arm946e-s
 
@@ -48,7 +48,8 @@ CFLAGS := -Wall -Wextra -Werror -Wno-unused-parameter -Wno-narrowing \
 
 CXXFLAGS := $(CFLAGS) -std=c++23 -fno-exceptions -fno-rtti -fno-threadsafe-statics -faligned-new=4
 
-LDFLAGS = --gc-sections -T $(CURDIR)/../symbols.x -T $(CURDIR)/../linker.x -Map $(TARGET).map
+SYMBOLS = $(CURDIR)/../SM64DS-PI/symbols9.x
+LDFLAGS = --gc-sections -T $(SYMBOLS) -T $(CURDIR)/../linker.x -Map $(TARGET).map
 
 ifdef CODEADDR
 	LDFLAGS += -Ttext $(CODEADDR)

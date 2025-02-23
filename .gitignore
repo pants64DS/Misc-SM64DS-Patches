@@ -6,5 +6,7 @@ todo.txt
 *.bin
 *.elf
 *.sym
+*.sav
+*.ml*
 *.o
 *.d

@@ -1,4 +1,4 @@
-#include "SM64DS_2.h"
+#include "SM64DS_PI.h"
 
 // see shellSpeedAndRotation.s
 extern "C" Fix12i GetShellSpeedLimit(Fix12i limit, Player& player)

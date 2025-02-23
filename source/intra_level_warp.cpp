@@ -1,5 +1,4 @@
-#include "SM64DS_2.h"
-// #include "MOM/source/MOM_IDs.h"
+#include "SM64DS_PI.h"
 
 asm(R"(
 nsub_020b0be4_ov_02:
@@ -46,7 +45,7 @@ static bool IsWarpPipeNear(const Vector3& pos)
 
 extern "C" bool ShouldExitNormally(const Actor& exit, Player& player)
 {
-	if (exit.param1 >> 0x18 != LEVEL_ID) [[likely]]
+	if (exit.param1 >> 0x18 != static_cast<u32>(LEVEL_ID)) [[likely]]
 		return true;
 
 	unk_0209f2fc = 0;
@@ -80,7 +79,7 @@ extern "C" Player& UpdateIntraLevelWarp(Player& player)
 	if (warpFrameCounter == 0 || (--warpFrameCounter != 0 && warpFrameCounter != framesFromSpawnToSound))
 		return player;
 
-	const LevelFile::Entrance& entrance = (*ENTRANCE_ARR_PTR)[entranceID];
+	const LVL_Overlay::EntranceObj& entrance = ENTRANCE_ARR_PTR[entranceID];
 	const Vector3 pos = entrance.pos;
 
 	if (warpFrameCounter == 0)
@@ -90,20 +89,20 @@ extern "C" Player& UpdateIntraLevelWarp(Player& player)
 		return player;
 	}
 
-	const unsigned viewID = entrance.unk0e >> 3 & 0xf;
-	const unsigned areaID = entrance.unk0e & 7;
-	const unsigned entranceMode = entrance.unk0e >> 7 & 0xf;
+	const unsigned viewID = entrance.param1 >> 3 & 0xf;
+	const unsigned areaID = entrance.param1 & 7;
+	const unsigned entranceMode = entrance.param1 >> 7 & 0xf;
 
 	const int param1 = player.realChar | (player.param1 & 3) << 3 | player.playerID << 6 | entranceMode << 8;
 
-	PLAYER_ARR[0] = static_cast<Player*>(Actor::Spawn(player.actorID, param1, pos, &entrance.rot, areaID, -1));
+	PLAYER_ARR[0] = static_cast<Player*>(Actor::Spawn(player.actorID, param1, pos, &entrance.ang, areaID, -1));
 
 	if (player.eggPtrArr && player.eggPtrArr[0])
-		player.eggPtrArr[0]->Destroy();
+		player.eggPtrArr[0]->MarkForDestruction();
 
 	player.KillAndTrackInDeathTable();
 
-	CAMERA->Destroy();
+	CAMERA->MarkForDestruction();
 	CAMERA = static_cast<Camera*>(SpawnActorBase(CAMERA->actorID, ROOT_ACTOR_BASE, viewID, 0));
 
 	return player;

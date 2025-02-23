@@ -121,7 +121,7 @@ IMPLEMENT(SetEntranceMode)
 IMPLEMENT(DeactivatePlayer<>)
 (Player& player, const char* params, short minFrame, short maxFrame)
 {
-	player.flags &= ~(Actor::BEHAVIOR_DURING_STAR_SPAWNING | Actor::BEHAVIOR_DURING_CUTSCENES);
+	player.flags &= ~(Actor::UPDATE_DURING_STAR_SPAWNING | Actor::UPDATE_DURING_CUTSCENES);
 }
 
 asm(R"(
@@ -208,19 +208,19 @@ IMPLEMENT(Print<1>)
 IMPLEMENT(SetCamAngleZ)
 (Camera& cam, const char* params, short minFrame, short maxFrame)
 {
-	cam.zAngle = ReadUnaligned<short>(params);
+	cam.angZ = ReadUnaligned<short>(params);
 }
 
 IMPLEMENT(RotateCamZ)
 (Camera& cam, const char* params, short minFrame, short maxFrame)
 {
-	cam.zAngle += ReadUnaligned<short>(params);
+	cam.angZ += ReadUnaligned<short>(params);
 }
 
 IMPLEMENT(ExpDecayCamAngleZ)
 (Camera& cam, const char* params, short minFrame, short maxFrame)
 {
-	CallApproachAngle(cam.zAngle, params);
+	CallApproachAngle(cam.angZ, params);
 }
 
 IMPLEMENT(SetCamShakeIntensity)

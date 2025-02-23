@@ -1,7 +1,7 @@
 #ifndef INFINITE_FLOOR_INCLUDED
 #define INFINITE_FLOOR_INCLUDED
 
-#include "SM64DS_2.h"
+#include "SM64DS_PI.h"
 
 struct InfiniteFloor : public Actor, public MeshColliderBase
 {
@@ -16,8 +16,8 @@ struct InfiniteFloor : public Actor, public MeshColliderBase
 	virtual void GetSurfaceInfo(short triangleID, SurfaceInfo& res) final override;
 	virtual void GetNormal(short triangleID, Vector3& res) final override;
 	virtual void GetTriangleOrigin(short triangleID, Vector3& res) final override;
-	virtual unsigned DetectClsn(RaycastGround& ray) final override;
-	virtual unsigned DetectClsn(RaycastLine& ray) final override;
+	virtual bool DetectClsn(RaycastGround& ray) final override;
+	virtual bool DetectClsn(RaycastLine& ray) final override;
 	virtual unsigned DetectClsn(SphereClsn& sphere) final override;
 };
 
