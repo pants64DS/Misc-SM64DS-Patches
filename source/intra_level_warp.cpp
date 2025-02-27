@@ -79,7 +79,7 @@ extern "C" Player& UpdateIntraLevelWarp(Player& player)
 	if (warpFrameCounter == 0 || (--warpFrameCounter != 0 && warpFrameCounter != framesFromSpawnToSound))
 		return player;
 
-	const LVL_Overlay::EntranceObj& entrance = ENTRANCE_ARR_PTR[entranceID];
+	const LevelOverlay::EntranceObj& entrance = ENTRANCE_ARR_PTR[entranceID];
 	const Vector3 pos = entrance.pos;
 
 	if (warpFrameCounter == 0)

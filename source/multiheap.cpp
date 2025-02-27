@@ -1,6 +1,7 @@
-#include "Memory.h"
+#include "SM64DS_PI.h"
 #include <new>
 #include <array>
+#include <functional>
 
 #define ITCM_ARENA_START     0x01ffdf40
 #define MAIN_RAM_START       0x02000000
